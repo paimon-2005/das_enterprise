@@ -20,7 +20,7 @@ exports.getAllDealers = async (req, res, next) => {
             ];
         }
 
-        const dealers = await Dealer.find(query).populate('area', 'name');
+        const dealers = await Dealer.find(query);
 
         const dealersWithStats = await Promise.all(
             dealers.map(async (dealer) => {
@@ -58,7 +58,6 @@ exports.getAllDealers = async (req, res, next) => {
 exports.getDealerById = async (req, res, next) => {
     try {
         const dealer = await Dealer.findById(req.params.id)
-            .populate('area', 'name')
             .populate('approvedBy', 'name');
 
         if (!dealer) {

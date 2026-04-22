@@ -1,15 +1,22 @@
 const express = require('express');
+const { 
+    createArea, 
+    getAllAreas, 
+    updateArea, 
+    deleteArea,
+    getAreaStats
+} = require('../controllers/areaController');
+const { protect, restrictTo } = require('../middleware/authMiddleware');
+
 const router = express.Router();
-const areaController = require('../controllers/areaController');
-const { protect, restrictTo } = require('../middleware/auth');
 
-router.get('/', areaController.getAllAreas);
-router.get('/:id/stats', protect, restrictTo('admin'), areaController.getAreaStats);
+// Publicly available (used in registration)
+router.get('/', getAllAreas);
 
-router.use(protect, restrictTo('admin'));
-
-router.post('/', areaController.createArea);
-router.put('/:id', areaController.updateArea);
-router.delete('/:id', areaController.deleteArea);
+// Admin Only
+router.post('/', protect, restrictTo('admin'), createArea);
+router.get('/:id/stats', protect, restrictTo('admin'), getAreaStats);
+router.put('/:id', protect, restrictTo('admin'), updateArea);
+router.delete('/:id', protect, restrictTo('admin'), deleteArea);
 
 module.exports = router;

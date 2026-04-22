@@ -1,11 +1,11 @@
 import { apiSlice } from '../apiSlice';
 
-
 export const areasApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getAreas: builder.query({
             query: () => '/areas',
-            providesTags: ['Areas'],
+            providesTags: ['Area'],
+            transformResponse: (response) => response.areas,
         }),
         createArea: builder.mutation({
             query: (data) => ({
@@ -13,7 +13,7 @@ export const areasApi = apiSlice.injectEndpoints({
                 method: 'POST',
                 body: data,
             }),
-            invalidatesTags: ['Areas'],
+            invalidatesTags: ['Area'],
         }),
         updateArea: builder.mutation({
             query: ({ id, ...data }) => ({
@@ -21,18 +21,14 @@ export const areasApi = apiSlice.injectEndpoints({
                 method: 'PUT',
                 body: data,
             }),
-            invalidatesTags: ['Areas'],
+            invalidatesTags: ['Area'],
         }),
         deleteArea: builder.mutation({
             query: (id) => ({
                 url: `/areas/${id}`,
                 method: 'DELETE',
             }),
-            invalidatesTags: ['Areas'],
-        }),
-        getAreaStats: builder.query({
-            query: (id) => `/areas/${id}/stats`,
-            providesTags: (result, error, id) => [{ type: 'Areas', id }],
+            invalidatesTags: ['Area'],
         }),
     }),
 });
@@ -42,5 +38,4 @@ export const {
     useCreateAreaMutation,
     useUpdateAreaMutation,
     useDeleteAreaMutation,
-    useGetAreaStatsQuery,
 } = areasApi;

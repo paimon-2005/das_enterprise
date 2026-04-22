@@ -10,12 +10,12 @@ import toast from 'react-hot-toast';
 
 // MOCK DATA for Landing Page UI
 const CATEGORIES = [
-    { id: 1, name: 'Grains & Rice', icon: '🌾', count: 124 },
-    { id: 2, name: 'Oils & Fats', icon: '🛢️', count: 45 },
-    { id: 3, name: 'Spices', icon: '🌶️', count: 89 },
-    { id: 4, name: 'Dairy', icon: '🥛', count: 32 },
-    { id: 5, name: 'Beverages', icon: '☕', count: 56 },
-    { id: 6, name: 'Snacks', icon: '🥨', count: 112 },
+    { id: 1, name: 'Nestle', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Nestle_textlogo.svg/2560px-Nestle_textlogo.svg.png', count: 124 },
+    { id: 2, name: 'Oils & Fats', image: 'https://cdn-icons-png.flaticon.com/512/3075/3075908.png', count: 45 },
+    { id: 3, name: 'Spices', image: 'https://cdn-icons-png.flaticon.com/512/1041/1041341.png', count: 89 },
+    { id: 4, name: 'Dairy', image: 'https://cdn-icons-png.flaticon.com/512/2674/2674486.png', count: 32 },
+    { id: 5, name: 'Beverages', image: 'https://cdn-icons-png.flaticon.com/512/3124/3124233.png', count: 56 },
+    { id: 6, name: 'Snacks', image: 'https://cdn-icons-png.flaticon.com/512/1256/1256667.png', count: 112 },
 ];
 
 const PROMOTED_PRODUCTS = [
@@ -115,12 +115,18 @@ const LandingPage = () => {
                                 <button 
                                     key={cat.id} 
                                     onClick={() => navigate(`/products?category=${encodeURIComponent(cat.name.split(' ')[0].toLowerCase())}`)}
-                                    className="min-w-[160px] flex-shrink-0 bg-white border border-gray-100 rounded-2xl p-6 flex flex-col items-center justify-center gap-4 hover:shadow-xl hover:border-[#16a34a] transition-all group flex-1"
+                                    className="min-w-[180px] flex-shrink-0 bg-white border border-gray-100 rounded-3xl p-8 flex flex-col items-center justify-center gap-6 hover:shadow-2xl hover:border-[#16a34a] transition-all group flex-1"
                                 >
-                                    <div className="text-5xl group-hover:scale-110 transition-transform">{cat.icon}</div>
+                                    <div className="h-16 flex items-center justify-center">
+                                        <img 
+                                            src={cat.image} 
+                                            alt={cat.name} 
+                                            className="h-full object-contain group-hover:scale-110 transition-transform"
+                                        />
+                                    </div>
                                     <div className="text-center">
-                                        <h3 className="font-bold text-gray-900">{cat.name}</h3>
-                                        <p className="text-xs text-gray-500 font-medium">{cat.count} Products</p>
+                                        <h3 className="font-bold text-gray-900 text-sm">{cat.name}</h3>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{cat.count} Products</p>
                                     </div>
                                 </button>
                             ))}

@@ -16,12 +16,12 @@ const createDefaultAdmin = async () => {
         const adminEmail = 'mriabhi2005@gmail.com';
         const adminPass = 'anu@2005';
 
-        const adminExists = await User.findOne({ email: adminEmail });
+        let admin = await User.findOne({ email: adminEmail });
 
-        if (adminExists) {
+        if (admin) {
             console.log('ℹ️ Admin already exists: mriabhi2005@gmail.com');
         } else {
-            await User.create({
+            admin = await User.create({
                 name: 'Super Admin',
                 email: adminEmail,
                 password: adminPass,
@@ -29,6 +29,22 @@ const createDefaultAdmin = async () => {
                 isActive: true
             });
             console.log('✅ Admin created: mriabhi2005@gmail.com');
+        }
+        
+        // Auto-seed Default Service Areas
+        const Area = require('./models/Area');
+        const defaultAreas = [
+            { name: "Mogra", description: "Mogra local region", createdBy: admin._id },
+            { name: "Jirat", description: "Jirat and surrounding zones", createdBy: admin._id },
+            { name: "Kuntighat", description: "Kuntighat area", createdBy: admin._id }
+        ];
+
+        for (let areaData of defaultAreas) {
+            const exists = await Area.findOne({ name: areaData.name });
+            if (!exists) {
+                await Area.create(areaData);
+                console.log(`✅ Default Area added: ${areaData.name}`);
+            }
         }
 
         // Only disconnect if running as a standalone script

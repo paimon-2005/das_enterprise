@@ -1,28 +1,24 @@
 const express = require('express');
 const { 
-    getCart, 
-    addToCart, 
-    updateCartItem,
-    createOrder,
-    getMyOrders,
-    getOrderById,
-    createPaymentIntent
+    createOrder, 
+    getMyOrders, 
+    getAllOrders, 
+    getOrderById, 
+    updateOrderStatus, 
+    updatePaymentStatus 
 } = require('../controllers/orderController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, restrictTo } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Cart
-router.get('/cart', protect, getCart);
-router.post('/cart', protect, addToCart);
-router.put('/cart', protect, updateCartItem);
+// Publicly logged in (Dealer or Admin)
+router.post('/', protect, createOrder);
+router.get('/my-orders', protect, getMyOrders);
+router.get('/:id', protect, getOrderById);
 
-// Orders
-router.get('/orders/my-orders', protect, getMyOrders);
-router.get('/orders/:id', protect, getOrderById);
-router.post('/orders', protect, createOrder);
-
-// Payments
-router.post('/orders/create-payment-intent', protect, createPaymentIntent);
+// Admin Only
+router.get('/', protect, restrictTo('admin'), getAllOrders);
+router.put('/:id/status', protect, restrictTo('admin'), updateOrderStatus);
+router.put('/:id/payment', protect, restrictTo('admin'), updatePaymentStatus);
 
 module.exports = router;

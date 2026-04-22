@@ -1,364 +1,256 @@
 import React, { useState } from 'react';
 import { 
     Search, 
-    Calendar, 
     Filter, 
-    ExternalLink, 
-    Printer, 
-    CheckCircle, 
-    Truck, 
-    ShoppingBag, 
-    Clock, 
-    XCircle,
-    ChevronRight,
-    SearchX,
+    ChevronRight, 
+    Calendar,
+    ShoppingBag,
+    Eye,
+    CheckCircle2,
+    Clock,
+    X,
     Loader2,
-    Phone,
-    Smartphone
+    Package,
+    Truck,
+    XCircle
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { 
+    useGetAllOrdersQuery, 
+    useUpdateOrderStatusMutation, 
+    useUpdatePaymentStatusMutation 
+} from '../../features/orders/ordersApi';
 
+const AdminOrders = () => {
+    const [filters, setFilters] = useState({
+        status: '',
+        area: '',
+        paymentTerm: '',
+    });
+    const [searchTerm, setSearchTerm] = useState('');
 
-import { useGetAdminOrdersQuery, useUpdateOrderStatusMutation, useGetAdminStatsQuery } from '../../features/admin/adminApi';
-
-import { clsx } from 'clsx';
-import { motion, AnimatePresence } from 'framer-motion';
-
-const Orders = () => {
-    const { data: ordersData, isLoading: ordersLoading } = useGetAdminOrdersQuery();
-    const { data: statsData } = useGetAdminStatsQuery();
+    const { data: orderData, isLoading } = useGetAllOrdersQuery(filters);
     const [updateStatus] = useUpdateOrderStatusMutation();
-    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [updatePayment] = useUpdatePaymentStatusMutation();
 
-    const orders = ordersData?.data || [];
-    const stats = statsData?.data || {};
+    // Static hardcoded delivery areas — max 60 shops, admin knows them all
+    const AREAS = ['Mogra', 'Jirat', 'Kuntighat'];
 
-    const getStatusConfig = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'pending': return { label: 'Pending', color: 'bg-amber-100 text-amber-700', icon: <Clock size={12} /> };
-            case 'confirmed': return { label: 'Confirmed', color: 'bg-blue-100 text-blue-700', icon: <CheckCircle size={12} /> };
-            case 'processing': return { label: 'Processing', color: 'bg-purple-100 text-purple-700', icon: <ShoppingBag size={12} /> };
-            case 'shipped': return { label: 'Shipped', color: 'bg-cyan-100 text-cyan-700', icon: <Truck size={12} /> };
-            case 'delivered': return { label: 'Delivered', color: 'bg-green-100 text-green-700', icon: <CheckCircle size={12} /> };
-            case 'cancelled': return { label: 'Cancelled', color: 'bg-red-100 text-red-700', icon: <XCircle size={12} /> };
-            default: return { label: status || 'Unknown', color: 'bg-gray-100 text-gray-700', icon: null };
+    const orders = orderData?.orders || [];
+    
+    // Client-side search for shop name
+    const filteredOrders = orders.filter(o => 
+        o.shopName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        o._id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleStatusChange = async (id, status) => {
+        try {
+            await updateStatus({ id, status }).unwrap();
+            toast.success(`Order marked as ${status}`);
+        } catch (err) {
+            toast.error(err?.data?.message || 'Update failed');
         }
     };
 
-    if (ordersLoading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-                <Loader2 className="animate-spin text-primary-600" size={40} />
-                <p className="text-gray-500 font-bold animate-pulse">Fetching Orders...</p>
+    const handlePaymentChange = async (id, status) => {
+        try {
+            await updatePayment({ id, status }).unwrap();
+            toast.success(`Payment status: ${status}`);
+        } catch (err) {
+            toast.error(err?.data?.message || 'Update failed');
+        }
+    };
+
+    const getStatusBadge = (status) => {
+        const styles = {
+            pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+            confirmed: 'bg-blue-50 text-blue-700 border-blue-200',
+            processing: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+            dispatched: 'bg-orange-50 text-orange-700 border-orange-200',
+            delivered: 'bg-green-50 text-green-700 border-green-200',
+            cancelled: 'bg-red-50 text-red-700 border-red-200',
+        };
+        return `inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] uppercase font-black border ${styles[status] || 'bg-gray-50 text-gray-500 border-gray-200'}`;
+    };
+
+    if (isLoading) return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+                <Loader2 className="w-12 h-12 text-[#16a34a] animate-spin mx-auto mb-4" />
+                <p className="text-gray-500 font-medium">Loading orders...</p>
             </div>
-        );
-    }
+        </div>
+    );
 
     return (
-        <div className="space-y-6">
+        <div className="p-6 lg:p-8 space-y-6 bg-gray-50 min-h-screen">
+            
             {/* Page Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Order Management</h2>
-                    <p className="text-sm text-gray-500 mt-1">Manage, filter and update distributor orders</p>
+                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Admin</p>
+                    <h1 className="text-3xl font-black text-gray-900">
+                        Order <span className="text-[#16a34a]">Management</span>
+                    </h1>
+                    <p className="text-gray-400 text-sm font-medium mt-1">{filteredOrders.length} orders found</p>
                 </div>
-                <div className="flex gap-2">
-                    <button className="bg-white border border-gray-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-gray-50 transition-all">
-                        <Calendar size={18} /> {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
-                    </button>
-                    <button className="bg-white border border-gray-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-gray-50 transition-all">
-                        <Filter size={18} /> Filters
-                    </button>
+                <div className="relative">
+                    <Search className="absolute left-3.5 top-3 w-5 h-5 text-gray-400" />
+                    <input 
+                        type="text"
+                        placeholder="Shop name or Order ID..."
+                        className="bg-gray-50 border-2 border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-[#16a34a] w-full md:w-72 font-medium"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                 </div>
-            </div>
-
-            {/* Order Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {[
-                    { label: 'Total Orders', value: stats.totalOrders || orders.length, color: 'text-gray-900' },
-                    { label: 'Pending', value: orders.filter(o => o.orderStatus === 'pending').length, color: 'text-amber-600' },
-                    { label: 'Processing', value: orders.filter(o => o.orderStatus === 'processing').length, color: 'text-purple-600' },
-                    { label: 'Shipped', value: orders.filter(o => o.orderStatus === 'shipped').length, color: 'text-cyan-600' },
-                    { label: 'Revenue Today', value: `₹${(stats.totalRevenue || 0).toLocaleString('en-IN')}`, color: 'text-primary-600' },
-                ].map((stat) => (
-                    <div key={stat.label} className="card !p-4">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
-                        <p className={clsx("text-xl font-black mt-1", stat.color)}>{stat.value}</p>
-                    </div>
-                ))}
             </div>
 
             {/* Filter Bar */}
-            <div className="card !p-4 flex items-center gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input 
-                        type="text" 
-                        placeholder="Search by Order ID or Customer..." 
-                        className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-primary-100 transition-all font-medium text-sm"
-                    />
+            <div className="bg-white border-2 border-gray-100 p-4 rounded-2xl flex flex-wrap gap-3 items-center shadow-sm">
+                <div className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest">
+                    <Filter className="w-4 h-4" /> Filters:
                 </div>
-                <select className="bg-gray-50 border border-gray-100 rounded-lg px-4 py-2 text-sm font-medium outline-none">
-                    <option>All Statuses</option>
-                    <option>Pending</option>
-                    <option>Processing</option>
-                    <option>Delivered</option>
+                
+                <select 
+                    className="bg-gray-50 border-2 border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#16a34a] font-bold cursor-pointer"
+                    value={filters.status}
+                    onChange={(e) => setFilters(f => ({...f, status: e.target.value}))}
+                >
+                    <option value="">Status: All</option>
+                    {['pending', 'confirmed', 'processing', 'dispatched', 'delivered', 'cancelled'].map(s => 
+                        <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                    )}
                 </select>
+
+                <select 
+                    className="bg-gray-50 border-2 border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#16a34a] font-bold cursor-pointer"
+                    value={filters.area}
+                    onChange={(e) => setFilters(f => ({...f, area: e.target.value}))}
+                >
+                    <option value="">Area: All</option>
+                    {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
+
+                <select 
+                    className="bg-gray-50 border-2 border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#16a34a] font-bold cursor-pointer"
+                    value={filters.paymentTerm}
+                    onChange={(e) => setFilters(f => ({...f, paymentTerm: e.target.value}))}
+                >
+                    <option value="">Payment: All</option>
+                    {['cash', 'credit', 'weekly'].map(t => 
+                        <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                    )}
+                </select>
+
+                {(filters.status || filters.area || filters.paymentTerm) && (
+                    <button 
+                        onClick={() => setFilters({status: '', area: '', paymentTerm: ''})}
+                        className="text-gray-400 hover:text-red-500 text-xs font-bold flex items-center gap-1.5 bg-red-50 px-3 py-2 rounded-xl border border-red-100 hover:border-red-200 transition-all"
+                    >
+                        <X className="w-3.5 h-3.5" /> Clear filters
+                    </button>
+                )}
             </div>
 
-            {/* Orders Content */}
-            <div className="card !p-0">
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
+            {/* Orders Table */}
+            <div className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-gray-50 border-b border-gray-100">
-                            <tr className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                                <th className="px-6 py-4">Order Details</th>
-                                <th className="px-6 py-4">Customer</th>
-                                <th className="px-6 py-4">Items / Total</th>
+                        <thead className="bg-gray-50 text-xs font-black text-gray-500 uppercase tracking-wider border-b-2 border-gray-100">
+                            <tr>
+                                <th className="px-6 py-4">Order Detail</th>
+                                <th className="px-6 py-4">Shop &amp; Area</th>
+                                <th className="px-6 py-4">Total Amount</th>
                                 <th className="px-6 py-4">Payment</th>
                                 <th className="px-6 py-4">Order Status</th>
-                                <th className="px-6 py-4">Date</th>
-                                <th className="px-6 py-4"></th>
+                                <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {orders.length === 0 ? (
-                                <tr>
-                                    <td colSpan="7" className="px-6 py-20 text-center text-gray-400 font-bold">No orders found in database.</td>
-                                </tr>
-                            ) : orders.map((order) => {
-                                const status = getStatusConfig(order.orderStatus);
-                                return (
-                                    <tr 
-                                        key={order._id} 
-                                        onClick={() => setSelectedOrder(order)}
-                                        className="hover:bg-gray-50 cursor-pointer transition-colors"
-                                    >
-                                        <td className="px-6 py-4">
-                                            <p className="font-bold text-primary-600 text-sm">#{order._id.slice(-6).toUpperCase()}</p>
-                                            <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-tighter">via {order.paymentMethod || 'Stripe'}</p>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className={clsx(
-                                                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold uppercase",
-                                                    order.userModel === 'Dealer' ? "bg-primary-100 text-primary-600" : "bg-gray-200 text-gray-500"
-                                                )}>
-                                                    {(order.shopName || order.user?.name || 'G').charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-bold text-gray-900">{order.shopName || order.user?.name || 'Guest User'}</p>
-                                                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
-                                                        {order.areaName || order.user?.email || 'Direct Account'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        <td className="px-6 py-4">
-                                            <p className="text-sm font-semibold text-gray-900">₹{order.totalPrice?.toLocaleString('en-IN')}</p>
-                                            <p className="text-xs text-gray-500">{order.orderItems?.length || 0} items</p>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={clsx(
-                                                "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                                                order.isPaid ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-                                            )}>
-                                                {order.isPaid ? 'Paid' : 'Unpaid'}
+                        <tbody className="divide-y-2 divide-gray-50">
+                            {filteredOrders.map(order => (
+                                <tr key={order._id} className="hover:bg-green-50/30 group transition-all">
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-black text-gray-800 uppercase tracking-wider font-mono">
+                                                #{order._id.substring(18)}
                                             </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div 
-                                                className={clsx("px-3 py-1 rounded-full text-[10px] font-bold uppercase flex items-center gap-1 w-fit", status.color)}
+                                            <span className="text-xs text-gray-400 font-medium flex items-center gap-1 mt-1">
+                                                <Calendar className="w-3 h-3" /> {new Date(order.createdAt).toLocaleDateString('en-IN')}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-black text-gray-900">{order.shopName}</span>
+                                            <span className="text-xs font-bold text-[#16a34a] uppercase tracking-wider mt-0.5">{order.area}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-base font-black text-[#16a34a]">₹{order.totalPrice.toLocaleString('en-IN')}</span>
+                                            <span className="text-xs text-gray-400 font-medium mt-0.5">{order.items.length} product(s)</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <select 
+                                            value={order.paymentStatus}
+                                            onChange={(e) => handlePaymentChange(order._id, e.target.value)}
+                                            className={`text-xs font-black uppercase rounded-lg px-2.5 py-1.5 border-2 cursor-pointer outline-none transition-all ${
+                                                order.paymentStatus === 'paid' 
+                                                    ? 'text-green-700 bg-green-50 border-green-200' 
+                                                    : 'text-orange-700 bg-orange-50 border-orange-200'
+                                            }`}
+                                        >
+                                            <option value="pending">Pending</option>
+                                            <option value="partial">Partial</option>
+                                            <option value="paid">Paid</option>
+                                        </select>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className={getStatusBadge(order.orderStatus)}>
+                                                {order.orderStatus}
+                                            </span>
+                                            <select 
+                                                className="bg-gray-50 border-2 border-gray-200 rounded-lg px-2 py-1 text-xs text-gray-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity outline-none focus:border-[#16a34a] cursor-pointer"
+                                                value={order.orderStatus}
+                                                onChange={(e) => handleStatusChange(order._id, e.target.value)}
                                             >
-                                                {status.icon} {status.label}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-xs font-bold text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
-                                        <td className="px-6 py-4 text-right">
-                                            <ChevronRight className="text-gray-300" size={18} />
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                                                <option value="">Update Status</option>
+                                                {['pending', 'confirmed', 'processing', 'dispatched', 'delivered', 'cancelled'].map(s => 
+                                                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                                                )}
+                                            </select>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <Link 
+                                            to={`/admin/orders/${order._id}`} 
+                                            className="text-gray-400 hover:text-[#16a34a] transition-colors p-2.5 rounded-xl hover:bg-green-50 inline-block border-2 border-gray-100 hover:border-green-100"
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                        </Link>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
-                </div>
 
-                {/* Mobile Card View */}
-                <div className="md:hidden divide-y divide-gray-100">
-                    {orders.length === 0 ? (
-                        <div className="py-20 text-center text-gray-400 font-bold">No orders found.</div>
-                    ) : orders.map((order) => {
-                        const status = getStatusConfig(order.orderStatus);
-                        return (
-                            <div 
-                                key={order._id} 
-                                onClick={() => setSelectedOrder(order)}
-                                className="p-4 active:bg-gray-50 transition-colors space-y-4"
-                            >
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="text-xs font-bold text-primary-600">#{order._id.slice(-6).toUpperCase()}</p>
-                                        <p className="text-lg font-black text-gray-900 mt-1">₹{order.totalPrice?.toLocaleString('en-IN')}</p>
-                                    </div>
-                                    <div 
-                                        className={clsx("px-3 py-1 rounded-full text-[10px] font-bold uppercase flex items-center gap-1", status.color)}
-                                    >
-                                        {status.icon} {status.label}
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-400 uppercase">
-                                        {order.user?.name?.charAt(0) || 'G'}
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-gray-800">{order.user?.name || 'Guest'}</p>
-                                        <p className="text-[10px] text-gray-400">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
-                                    </div>
-                                </div>
+                    {filteredOrders.length === 0 && !isLoading && (
+                        <div className="p-20 text-center space-y-4">
+                            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto">
+                                <ShoppingBag className="w-8 h-8 text-gray-300" />
                             </div>
-                        );
-                    })}
+                            <p className="text-gray-400 font-medium">No orders found matching your criteria.</p>
+                        </div>
+                    )}
                 </div>
             </div>
-
-
-            {/* Slide-over Placeholder */}
-            {selectedOrder && (
-                <div className="fixed inset-0 z-[100] flex justify-end">
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => setSelectedOrder(null)}
-                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                    />
-                    <motion.div 
-                        initial={{ x: '100%' }}
-                        animate={{ x: 0 }}
-                        exit={{ x: '100%' }}
-                        className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col"
-                    >
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                            <h3 className="text-xl font-black text-gray-900">Order #{selectedOrder._id.slice(-6).toUpperCase()}</h3>
-                            <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-gray-50 rounded-full">
-                                <XCircle className="text-gray-400" />
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                            {/* Order Info */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 bg-gray-50 rounded-xl">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Status</p>
-                                    <span className={clsx("px-2 py-0.5 rounded text-xs font-bold uppercase", getStatusConfig(selectedOrder.orderStatus).color)}>
-                                        {selectedOrder.orderStatus}
-                                    </span>
-                                </div>
-                                <div className="p-4 bg-gray-50 rounded-xl">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Placed On</p>
-                                    <p className="text-sm font-bold">{new Date(selectedOrder.createdAt).toLocaleString()}</p>
-                                </div>
-                            </div>
-
-                            {/* Items List */}
-                            <div>
-                                <h4 className="font-black text-gray-900 mb-4 uppercase text-xs tracking-widest">Items List</h4>
-                                <div className="space-y-4">
-                                    {selectedOrder.orderItems?.map((item, idx) => (
-                                        <div key={idx} className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                                                {item.image ? <img src={item.image} className="w-full h-full object-cover" alt="" /> : <ShoppingBag className="text-gray-400" size={20} />}
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-sm font-bold text-gray-900">{item.name}</p>
-                                                <p className="text-xs text-gray-500">{item.qty} x ₹{item.price}</p>
-                                            </div>
-                                            <p className="text-sm font-bold">₹{item.qty * item.price}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Address & Contact */}
-                            <div className={clsx(
-                                "p-6 rounded-3xl shadow-xl transition-all",
-                                selectedOrder.userModel === 'Dealer' ? "bg-gray-900 shadow-gray-200" : "bg-primary-600 shadow-primary-100"
-                            )}>
-                                <h4 className={clsx(
-                                    "font-bold uppercase text-[10px] mb-4 tracking-widest flex items-center gap-2",
-                                    selectedOrder.userModel === 'Dealer' ? "text-gray-400" : "text-primary-200"
-                                )}>
-                                    <Smartphone size={14} /> {selectedOrder.userModel === 'Dealer' ? 'Verified Shop Profile' : 'Delivery & Contact'}
-                                </h4>
-                                <div className="space-y-4 text-white">
-                                    {selectedOrder.userModel === 'Dealer' ? (
-                                        <div>
-                                            <p className="font-black text-xl leading-tight">{selectedOrder.shopName}</p>
-                                            <p className="text-xs font-bold text-primary-400 uppercase tracking-widest mt-1">Owner: {selectedOrder.ownerName}</p>
-                                            
-                                            <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/5">
-                                                <p className="text-[10px] text-gray-500 font-bold uppercase mb-2">Delivery Address</p>
-                                                <p className="text-sm opacity-90 leading-relaxed italic">
-                                                    "{selectedOrder.shippingAddress?.street}, {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.zipCode}"
-                                                </p>
-                                                <div className="mt-3 flex items-center gap-2">
-                                                    <MapPin size={12} className="text-primary-500" />
-                                                    <span className="text-xs font-black uppercase tracking-widest text-primary-500">{selectedOrder.areaName}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            <p className="font-black text-lg">{selectedOrder.user?.name}</p>
-                                            <p className="text-sm opacity-90 mt-1 leading-relaxed">
-                                                {selectedOrder.shippingAddress?.street}, {selectedOrder.shippingAddress?.city}<br />
-                                                {selectedOrder.shippingAddress?.zipCode}, {selectedOrder.shippingAddress?.country}
-                                            </p>
-                                        </div>
-                                    )}
-                                    
-                                    <div className={clsx(
-                                        "pt-4 flex flex-wrap gap-4 border-t",
-                                        selectedOrder.userModel === 'Dealer' ? "border-white/10" : "border-primary-500/50"
-                                    )}>
-                                        <div className="flex items-center gap-2">
-                                            <Phone size={14} className={selectedOrder.userModel === 'Dealer' ? "text-primary-400" : "text-primary-200"} />
-                                            <span className="text-sm font-bold">{selectedOrder.user?.phone || 'No phone provided'}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <CheckCircle size={14} className={selectedOrder.userModel === 'Dealer' ? "text-primary-400" : "text-primary-200"} />
-                                            <span className="text-sm font-bold capitalize">{selectedOrder.paymentMethod}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                        </div>
-                        <div className="p-6 border-t border-gray-100 flex gap-4 bg-gray-50">
-                            <select 
-                                className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2 font-bold text-sm outline-none"
-                                value={selectedOrder.orderStatus}
-                                onChange={(e) => updateStatus({ id: selectedOrder._id, status: e.target.value })}
-                            >
-                                <option value="pending">Pending</option>
-                                <option value="confirmed">Confirmed</option>
-                                <option value="processing">Processing</option>
-                                <option value="shipped">Shipped</option>
-                                <option value="delivered">Delivered</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                            <button className="p-3 border border-gray-200 rounded-xl bg-white hover:bg-gray-100 transition-all">
-                                <Printer size={20} className="text-gray-500" />
-                            </button>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
         </div>
     );
 };
 
-
-export default Orders;
+export default AdminOrders;

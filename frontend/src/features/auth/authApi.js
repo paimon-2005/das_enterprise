@@ -1,30 +1,29 @@
 import { apiSlice } from '../apiSlice';
 
-export const authApiSlice = apiSlice.injectEndpoints({
+export const authApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         login: builder.mutation({
             query: (credentials) => ({
                 url: '/auth/login',
                 method: 'POST',
-                body: { ...credentials },
+                body: credentials,
             }),
         }),
         register: builder.mutation({
             query: (userData) => ({
                 url: '/auth/register',
                 method: 'POST',
-                body: { ...userData },
+                body: userData,
             }),
         }),
         logout: builder.mutation({
             query: () => ({
                 url: '/auth/logout',
-                method: 'POST', // Backend expects POST for logout usually to clear tokens
+                method: 'POST',
             }),
         }),
         getMe: builder.query({
             query: () => '/auth/me',
-            providesTags: ['User'],
         }),
     }),
 });
@@ -34,4 +33,4 @@ export const {
     useRegisterMutation,
     useLogoutMutation,
     useGetMeQuery,
-} = authApiSlice;
+} = authApi;

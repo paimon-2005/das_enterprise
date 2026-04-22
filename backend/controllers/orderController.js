@@ -1,208 +1,200 @@
-const Cart = require('../models/Cart');
-const Product = require('../models/Product');
 const Order = require('../models/Order');
+const Product = require('../models/Product');
+const User = require('../models/User');
 const AppError = require('../utils/appError');
-const stripe = require('../config/stripe');
 
-// CART
-const getCart = async (req, res, next) => {
+exports.createOrder = async (req, res, next) => {
     try {
-        let cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
-        if (!cart) {
-            cart = await Cart.create({ user: req.user._id, items: [] });
-        }
-        res.status(200).json({
-            success: true,
-            data: cart,
-        });
-    } catch (error) {
-        next(error);
-    }
-};
+        const { items, notes } = req.body;
 
-const addToCart = async (req, res, next) => {
-    try {
-        const { productId, quantity } = req.body;
-        let cart = await Cart.findOne({ user: req.user._id });
-
-        if (!cart) {
-            cart = await Cart.create({ user: req.user._id, items: [] });
+        if (!items || items.length === 0) {
+            return next(new AppError('No order items provided', 400));
         }
 
-        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+        // Fetch user (area is a plain string now — no populate needed)
+        const user = await User.findById(req.user._id);
+        if (!user) return next(new AppError('User not found', 404));
 
-        if (itemIndex > -1) {
-            cart.items[itemIndex].quantity += quantity;
-        } else {
-            cart.items.push({ product: productId, quantity });
+        let subtotal = 0;
+        const processedItems = [];
+
+        // Process items, fetch product details, snapshot them
+        for (const item of items) {
+            const product = await Product.findById(item.product);
+            if (!product) return next(new AppError(`Product not found: ${item.product}`, 404));
+            if (product.stock < item.quantity) {
+                return next(new AppError(`Insufficient stock for ${product.name}`, 400));
+            }
+
+            const itemTotal = product.price * item.quantity;
+            subtotal += itemTotal;
+
+            processedItems.push({
+                product: product._id,
+                productName: product.name,
+                quantity: item.quantity,
+                price: product.price,
+                total: itemTotal
+            });
+
+            // Reduce stock
+            product.stock -= item.quantity;
+            await product.save();
         }
 
-        await cart.save();
-        res.status(200).json({
-            success: true,
-            data: cart,
-        });
-    } catch (error) {
-        next(error);
-    }
-};
+        const tax = Math.round(subtotal * 0.18); // 18% GST
+        const totalPrice = subtotal + tax;
 
-const updateCartItem = async (req, res, next) => {
-    try {
-        const { productId, quantity } = req.body;
-        const cart = await Cart.findOne({ user: req.user._id });
-
-        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
-        if (itemIndex > -1) {
-            cart.items[itemIndex].quantity = quantity;
-            await cart.save();
-        }
-
-        res.status(200).json({
-            success: true,
-            data: cart,
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-const Dealer = require('../models/Dealer');
-const Area = require('../models/Area');
-
-// ORDERS
-const createOrder = async (req, res, next) => {
-    try {
-        const {
-            orderItems,
-            shippingAddress,
-            paymentMethod,
-            itemsPrice,
-            taxPrice,
-            shippingPrice,
+        // Create Order — area is a plain string snapshot from user profile
+        const order = await Order.create({
+            dealer: user._id,
+            shopName: user.shopName,
+            ownerName: user.name,
+            area: user.area,          // 'Mogra' | 'Jirat' | 'Kuntighat'
+            shopAddress: user.shopAddress,
+            phone: user.phone,
+            paymentTerm: user.paymentTerm,
+            items: processedItems,
+            subtotal,
+            tax,
             totalPrice,
             notes
-        } = req.body;
+        });
 
-        if (orderItems && orderItems.length === 0) {
-            return next(new AppError('No order items', 400));
+        // Update dealer dues if on credit
+        if (user.paymentTerm === 'credit' || user.paymentTerm === 'weekly') {
+            user.currentDue += totalPrice;
+            await user.save();
         }
 
-        const orderData = {
-            user: req.user._id,
-            userModel: req.user.role === 'dealer' ? 'Dealer' : 'User',
-            orderItems,
-            shippingAddress,
-            paymentMethod,
-            itemsPrice,
-            taxPrice,
-            shippingPrice,
-            totalPrice,
-            notes,
-            isPaid: paymentMethod === 'stripe' ? true : false,
-            paidAt: paymentMethod === 'stripe' ? Date.now() : null
-        };
+        res.status(201).json({
+            success: true,
+            order
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
-        // If dealer, snapshot their shop details
-        if (req.user.role === 'dealer') {
-            const dealer = await Dealer.findById(req.user._id).populate('area');
-            if (dealer) {
-                orderData.shopName = dealer.shopName;
-                orderData.ownerName = dealer.ownerName;
-                orderData.area = dealer.area?._id;
-                orderData.areaName = dealer.area?.name;
-                orderData.phone = dealer.phone;
-                orderData.paymentTerm = dealer.paymentTerm;
-                
-                // For dealers, the shipping address is usually their physical shop address
-                if (!shippingAddress.street || shippingAddress.street === 'Business Address') {
-                    orderData.shippingAddress = {
-                        street: dealer.shopAddress,
-                        city: dealer.city || 'Mumbai',
-                        state: dealer.state || 'Maharashtra',
-                        zipCode: dealer.zipCode || '400001',
-                        country: 'India'
-                    };
-                }
-                
-                // If payment method is 'credit', or if it's their default, record as due
-                if (paymentMethod === 'credit' || dealer.paymentTerm === 'credit') {
-                    orderData.dueAmount = totalPrice;
-                    dealer.currentDue += totalPrice;
-                    await dealer.save({ validateBeforeSave: false });
+exports.getMyOrders = async (req, res, next) => {
+    try {
+        const orders = await Order.find({ dealer: req.user._id }).sort('-createdAt');
+        res.status(200).json({
+            success: true,
+            count: orders.length,
+            orders
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getAllOrders = async (req, res, next) => {
+    try {
+        const { status, area, dealer, paymentTerm, from, to } = req.query;
+        let query = {};
+
+        if (status) query.orderStatus = status;
+        if (area) query.area = area;
+        if (dealer) query.dealer = dealer;
+        if (paymentTerm) query.paymentTerm = paymentTerm;
+        
+        if (from || to) {
+            query.createdAt = {};
+            if (from) query.createdAt.$gte = new Date(from);
+            if (to) query.createdAt.$lte = new Date(to);
+        }
+
+        const orders = await Order.find(query)
+            .populate('dealer', 'shopName name phone')
+            .sort('-createdAt');
+
+        res.status(200).json({
+            success: true,
+            count: orders.length,
+            orders
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getOrderById = async (req, res, next) => {
+    try {
+        const order = await Order.findById(req.params.id)
+            .populate('dealer', 'shopName name phone email shopAddress');
+
+        if (!order) return next(new AppError('Order not found', 404));
+
+        res.status(200).json({
+            success: true,
+            order
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.updateOrderStatus = async (req, res, next) => {
+    try {
+        const { status } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (!order) return next(new AppError('Order not found', 404));
+
+        // Restore stock if cancelled
+        if (status === 'cancelled' && order.orderStatus !== 'cancelled') {
+            for (const item of order.items) {
+                const product = await Product.findById(item.product);
+                if (product) {
+                    product.stock += item.quantity;
+                    await product.save();
                 }
             }
         }
 
-
-        const order = new Order(orderData);
-        const createdOrder = await order.save();
-
-
-        // Clear cart after order
-        await Cart.findOneAndDelete({ user: req.user._id });
-
-        res.status(201).json({
-            success: true,
-            data: createdOrder,
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-const getMyOrders = async (req, res, next) => {
-    try {
-        const orders = await Order.find({ user: req.user._id });
-        res.status(200).json({
-            success: true,
-            data: orders,
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-const getOrderById = async (req, res, next) => {
-    try {
-        const order = await Order.findById(req.params.id).populate('user', 'name email');
-        if (!order) {
-            return next(new AppError('Order not found', 404));
+        order.orderStatus = status;
+        if (status === 'delivered') {
+            order.isDelivered = true;
+            order.deliveredAt = Date.now();
         }
+
+        await order.save();
+
         res.status(200).json({
             success: true,
-            data: order,
+            order
         });
     } catch (error) {
         next(error);
     }
 };
 
-const createPaymentIntent = async (req, res, next) => {
+exports.updatePaymentStatus = async (req, res, next) => {
     try {
-        const { amount } = req.body;
+        const { status } = req.body;
+        const order = await Order.findById(req.params.id);
 
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(amount * 100), // amount in paisa
-            currency: 'inr',
-            metadata: { integration_check: 'accept_a_payment' },
-        });
+        if (!order) return next(new AppError('Order not found', 404));
+
+        // If marked as paid, reduce dealer's currentDue
+        if (status === 'paid' && order.paymentStatus !== 'paid') {
+            const dealer = await User.findById(order.dealer);
+            if (dealer) {
+                dealer.currentDue = Math.max(0, dealer.currentDue - order.totalPrice);
+                await dealer.save();
+            }
+            order.isPaid = true;
+        }
+
+        order.paymentStatus = status;
+        await order.save();
 
         res.status(200).json({
             success: true,
-            client_secret: paymentIntent.client_secret,
+            order
         });
     } catch (error) {
         next(error);
     }
-};
-
-module.exports = {
-    getCart,
-    addToCart,
-    updateCartItem,
-    createOrder,
-    getMyOrders,
-    getOrderById,
-    createPaymentIntent
 };

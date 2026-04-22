@@ -3,20 +3,43 @@ import { apiSlice } from '../apiSlice';
 export const ordersApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         createOrder: builder.mutation({
-            query: (order) => ({
+            query: (orderData) => ({
                 url: '/orders',
                 method: 'POST',
-                body: order,
+                body: orderData,
             }),
-            invalidatesTags: ['Order', 'AdminStats', 'Dealers', 'Areas'],
+            invalidatesTags: ['Order', 'User'],
         }),
         getMyOrders: builder.query({
-            query: () => '/orders/mine',
+            query: () => '/orders/my-orders',
             providesTags: ['Order'],
         }),
-        getOrderDetails: builder.query({
+        getAllOrders: builder.query({
+            query: (params) => ({
+                url: '/orders',
+                params,
+            }),
+            providesTags: ['Order'],
+        }),
+        getOrder: builder.query({
             query: (id) => `/orders/${id}`,
             providesTags: (result, error, id) => [{ type: 'Order', id }],
+        }),
+        updateOrderStatus: builder.mutation({
+            query: ({ id, status }) => ({
+                url: `/orders/${id}/status`,
+                method: 'PUT',
+                body: { status },
+            }),
+            invalidatesTags: (result, error, { id }) => [{ type: 'Order', id }, 'Order'],
+        }),
+        updatePaymentStatus: builder.mutation({
+            query: ({ id, status }) => ({
+                url: `/orders/${id}/payment`,
+                method: 'PUT',
+                body: { status },
+            }),
+            invalidatesTags: (result, error, { id }) => [{ type: 'Order', id }, 'Order', 'User'],
         }),
     }),
 });
@@ -24,5 +47,8 @@ export const ordersApi = apiSlice.injectEndpoints({
 export const {
     useCreateOrderMutation,
     useGetMyOrdersQuery,
-    useGetOrderDetailsQuery,
+    useGetAllOrdersQuery,
+    useGetOrderQuery,
+    useUpdateOrderStatusMutation,
+    useUpdatePaymentStatusMutation,
 } = ordersApi;

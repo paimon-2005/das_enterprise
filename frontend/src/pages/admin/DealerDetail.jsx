@@ -117,7 +117,7 @@ const DealerDetail = () => {
                         <div className="space-y-6 relative">
                             {[
                                 { icon: <User />, label: 'Owner Name', value: dealer.ownerName },
-                                { icon: <MapPin />, label: 'Delivery Area', value: dealer.area?.name || 'Not assigned' },
+                                { icon: <MapPin />, label: 'Delivery Area', value: dealer.area || 'Not assigned' },
                                 { icon: <Phone />, label: 'Phone Number', value: dealer.phone },
                                 { icon: <FileText />, label: 'GST Number', value: dealer.gstNumber || 'N/A' },
                                 { icon: <CreditCard />, label: 'Business Type', value: dealer.businessType },

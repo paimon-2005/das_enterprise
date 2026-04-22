@@ -5,12 +5,12 @@ const userSchema = new mongoose.Schema(
     {
         name: {
             type: String,
-            required: [true, 'Please provide your name'],
+            required: [true, 'Owner name is required'],
             trim: true,
         },
         email: {
             type: String,
-            required: [true, 'Please provide your email'],
+            required: [true, 'Email is required'],
             unique: true,
             lowercase: true,
             trim: true,
@@ -18,35 +18,55 @@ const userSchema = new mongoose.Schema(
         },
         password: {
             type: String,
-            required: [true, 'Please provide a password'],
+            required: [true, 'Password is required'],
             minlength: 8,
             select: false,
         },
         role: {
             type: String,
-            enum: ['admin', 'customer'],
-            default: 'customer',
+            enum: ['admin', 'dealer'],
+            default: 'dealer',
+        },
+        // Shop Details
+        shopName: {
+            type: String,
+            required: [function() { return this.role === 'dealer'; }, 'Shop name is required'],
+            trim: true,
+        },
+        area: {
+            type: String, // e.g. 'Mogra', 'Jirat', 'Kuntighat'
+            required: [function() { return this.role === 'dealer'; }, 'Shop area is required'],
+        },
+        shopAddress: {
+            type: String,
+            // optional
+        },
+        phone: {
+            type: String,
+            required: [function() { return this.role === 'dealer'; }, 'WhatsApp number is required'],
+        },
+        gstNumber: {
+            type: String,
+        },
+        businessType: {
+            type: String, // Kirana Store, Restaurant, etc.
+        },
+        paymentTerm: {
+            type: String,
+            enum: ['cash', 'credit', 'weekly'],
+            default: 'cash',
+        },
+        creditLimit: {
+            type: Number,
+            default: 0,
+        },
+        currentDue: {
+            type: Number,
+            default: 0,
         },
         isActive: {
             type: Boolean,
             default: true,
-        },
-        phone: {
-            type: String,
-        },
-        address: {
-            street: String,
-            city: String,
-            state: String,
-            zipCode: String,
-            country: { type: String, default: 'India' },
-        },
-        avatar: {
-            public_id: String,
-            url: {
-                type: String,
-                default: 'https://res.cloudinary.com/demo/image/upload/v1622550114/avatars/default_avatar.png',
-            },
         },
         refreshToken: {
             type: String,
@@ -59,9 +79,12 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before saving
-userSchema.pre('save', async function () {
-    if (!this.isModified('password')) return;
-    this.password = await bcrypt.hash(this.password, 12);
+userSchema.pre('save', async function() {
+    if (!this.isModified('password')) {
+        return;
+    }
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Method to compare password

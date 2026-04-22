@@ -1,100 +1,129 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   LayoutDashboard,
   Package,
   Database,
   ShoppingCart,
-  Users,
-  BarChart3,
-  Settings,
+  Store,
+  MapPin,
+  LogOut,
   ChefHat,
-  ChevronLeft,
   ChevronRight,
-  LogOut
+  X
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { logout } from '../../features/auth/authSlice';
+import { logout, selectCurrentUser } from '../../features/auth/authSlice';
 import { toast } from 'react-hot-toast';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const user = useSelector(selectCurrentUser);
 
   const handleLogout = () => {
     dispatch(logout());
-    toast.success('Logged out successfully');
-    navigate('/');
-
+    toast.success('Sign out successful');
+    navigate('/login');
   };
 
-  const menuItems = [
-    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/admin' },
-    { name: 'Products', icon: <Package size={20} />, path: '/admin/products' },
-    { name: 'Stock', icon: <Database size={20} />, path: '/admin/stock' },
-    { name: 'Orders', icon: <ShoppingCart size={20} />, path: '/admin/orders' },
-    { name: 'Customers', icon: <Users size={20} />, path: '/admin/customers' },
-    { name: 'Reports', icon: <BarChart3 size={20} />, path: '/admin/reports' },
-    { name: 'Settings', icon: <Settings size={20} />, path: '/admin/settings' },
+  const adminMenu = [
+    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/admin/dashboard' },
+    { name: 'Order Management', icon: <ShoppingCart size={20} />, path: '/admin/orders' },
+    { name: 'Shop Partners', icon: <Store size={20} />, path: '/admin/shops' },
+    { name: 'Inventory Management', icon: <Package size={20} />, path: '/admin/products' },
+    { name: 'Stock Levels', icon: <Database size={20} />, path: '/admin/stock' },
+    { name: 'Delivery Areas', icon: <MapPin size={20} />, path: '/admin/areas' },
   ];
 
   return (
-    <aside className="w-[260px] bg-gray-900 h-screen fixed left-0 top-0 text-gray-400 flex flex-col z-50">
-      {/* Brand */}
-      <div className="p-6 flex items-center gap-3 border-b border-gray-800/50">
-        <div className="bg-primary-600 p-2 rounded-lg text-white shadow-lg shadow-primary-900/20">
-          <ChefHat size={24} />
-        </div>
-        <div className="overflow-hidden">
-          <h1 className="text-white font-black text-xl tracking-tight leading-none font-jakarta">DAS Enterprise</h1>
-          <p className="text-[10px] uppercase font-bold tracking-widest text-primary-500 mt-1">Admin Panel</p>
-        </div>
-      </div>
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity" 
+          onClick={onClose}
+        />
+      )}
 
-      {/* Navigation */}
-      <nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto custom-scrollbar">
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.name}
-            to={item.path}
-            end={item.path === '/admin'}
-            className={({ isActive }) => clsx(
-              "flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition-all duration-300 group",
-              isActive
-                ? "bg-primary-600/10 text-primary-500 border-l-4 border-primary-600 shadow-sm"
-                : "hover:bg-gray-800 hover:text-white border-l-4 border-transparent"
-            )}
-          >
-            <span className={clsx("transition-transform group-hover:scale-110", item.path === '/admin' ? "text-primary-500" : "")}>
-              {item.icon}
-            </span>
-            <span className="text-sm">{item.name}</span>
-          </NavLink>
-        ))}
-      </nav>
-
-      {/* Footer / Account */}
-      <div className="p-4 border-t border-gray-800/50">
-        <div className="bg-gray-800/30 p-4 rounded-2xl flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 border-2 border-gray-700 flex items-center justify-center text-white text-xs font-black">
-            AD
+      <aside className={clsx(
+        "w-72 bg-white h-screen fixed left-0 top-0 border-r-2 border-gray-100 flex flex-col z-50 shadow-sm transition-transform duration-300 lg:translate-x-0 lg:static lg:h-auto",
+        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        "lg:fixed" // Keep it fixed on desktop
+      )}>
+        
+        {/* Brand Header */}
+        <div className="p-6 border-b-2 border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-[#16a34a] p-2.5 rounded-2xl text-white shadow-md shadow-green-200">
+              <ChefHat size={26} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h1 className="text-gray-900 font-black text-xl tracking-tight leading-none">
+                DAS <span className="text-[#16a34a]">Enterprise</span>
+              </h1>
+              <p className="text-[11px] font-bold tracking-widest text-gray-400 mt-1 uppercase">Administrator</p>
+            </div>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <p className="text-white text-xs font-bold truncate">Admin User</p>
-            <p className="text-[10px] text-gray-500 truncate">admin@distro.com</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="text-gray-500 hover:text-red-500 transition-colors"
-            title="Logout"
+          {/* Mobile Close Button */}
+          <button 
+            onClick={onClose}
+            className="lg:hidden p-2 hover:bg-gray-50 rounded-xl text-gray-400"
           >
-            <LogOut size={16} />
+            <X size={20} />
           </button>
         </div>
-      </div>
-    </aside>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-4 py-5 space-y-1 overflow-y-auto">
+          <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em] px-3 mb-3">Main Menu</p>
+          {adminMenu.map((item) => (
+            <NavLink
+              key={item.name}
+              to={item.path}
+              onClick={() => {
+                if (window.innerWidth < 1024) onClose();
+              }}
+              className={({ isActive }) => clsx(
+                "flex items-center justify-between px-4 py-3.5 rounded-xl font-bold transition-all group text-sm",
+                isActive
+                  ? "bg-[#16a34a] text-white shadow-md shadow-green-200"
+                  : "text-gray-600 hover:bg-green-50 hover:text-[#16a34a]"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <span className="transition-transform group-hover:scale-110">
+                  {item.icon}
+                </span>
+                <span>{item.name}</span>
+              </div>
+              <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" />
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Account Info at Bottom */}
+        <div className="p-4 border-t-2 border-gray-100">
+          <div className="bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl flex items-center gap-3 hover:border-gray-200 transition-all">
+            <div className="w-11 h-11 rounded-xl bg-[#16a34a] flex items-center justify-center text-white font-black text-lg shadow-sm shrink-0">
+              {user?.name?.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className="text-gray-900 text-sm font-black truncate">{user?.name}</p>
+              <p className="text-xs text-gray-400 font-medium truncate">{user?.email}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-xl transition-all border border-gray-200 hover:border-red-100"
+              title="Sign Out"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 };
 

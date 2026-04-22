@@ -19,7 +19,6 @@ const Sidebar = () => {
         { name: 'Stock', icon: <PackageSearch size={20} />, path: '/admin/stock' },
         { name: 'Orders', icon: <ShoppingCart size={20} />, path: '/admin/orders' },
         { name: 'Network Dealers', icon: <Users size={20} />, path: '/admin/dealers' },
-        { name: 'Delivery Areas', icon: <Layers size={20} />, path: '/admin/areas' },
         { name: 'Categories', icon: <Layers size={20} />, path: '/admin/categories' },
         { name: 'Reports', icon: <BarChart3 size={20} />, path: '/admin/reports' },
         { name: 'Settings', icon: <Settings size={20} />, path: '/admin/settings' },

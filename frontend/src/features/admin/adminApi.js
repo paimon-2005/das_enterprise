@@ -1,53 +1,35 @@
 import { apiSlice } from '../apiSlice';
-import { CONFIG } from '../../app/config';
 
 export const adminApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
-        getAdminStats: builder.query({
+        getDashboardStats: builder.query({
             query: () => '/admin/stats',
-            providesTags: ['AdminStats'],
+            providesTags: ['AdminStats', 'Order', 'Product', 'User'],
         }),
-        getRevenueHistory: builder.query({
-            query: (period) => `/admin/revenue?period=${period}`,
-        }),
-        getAdminOrders: builder.query({
-            query: () => '/admin/orders',
-            providesTags: ['Order'],
-        }),
-        updateOrderStatus: builder.mutation({
-            query: ({ id, status }) => ({
-                url: `/admin/orders/${id}/status`,
-                method: 'PUT',
-                body: { status },
-            }),
-            invalidatesTags: ['Order', 'AdminStats'],
-        }),
-        getAdminStock: builder.query({
-            query: () => '/admin/stock',
-            providesTags: ['Product'],
-        }),
-        updateStock: builder.mutation({
-            query: ({ id, stock }) => ({
-                url: `/admin/stock/${id}`,
-                method: 'PUT',
-                body: { stock },
-            }),
-            invalidatesTags: ['Product'],
-        }),
-        getAdminCustomers: builder.query({
-            query: () => '/admin/customers',
+        getShops: builder.query({
+            query: (filters) => {
+                const queryParams = new URLSearchParams();
+                if (filters?.area) queryParams.append('area', filters.area);
+                if (filters?.paymentTerm) queryParams.append('paymentTerm', filters.paymentTerm);
+                if (filters?.isActive !== undefined && filters?.isActive !== '') queryParams.append('isActive', filters.isActive);
+                
+                return `/admin/shops?${queryParams.toString()}`;
+            },
             providesTags: ['User'],
+        }),
+        updateShopCredit: builder.mutation({
+            query: ({ id, ...data }) => ({
+                url: `/admin/shops/${id}/credit`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: ['User', 'AdminStats'],
         }),
     }),
 });
 
 export const {
-    useGetAdminStatsQuery,
-    useGetRevenueHistoryQuery,
-    useGetAdminOrdersQuery,
-    useUpdateOrderStatusMutation,
-    useGetAdminStockQuery,
-    useUpdateStockMutation,
-    useGetAdminCustomersQuery,
+    useGetDashboardStatsQuery,
+    useGetShopsQuery,
+    useUpdateShopCreditMutation,
 } = adminApi;
-

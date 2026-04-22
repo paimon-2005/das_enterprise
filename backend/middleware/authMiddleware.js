@@ -14,12 +14,7 @@ const protect = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const Dealer = require('../models/Dealer');
-
-        let currentUser = await User.findById(decoded.id);
-        if (!currentUser) {
-            currentUser = await Dealer.findById(decoded.id);
-        }
+        const currentUser = await User.findById(decoded.id);
 
         if (!currentUser) {
             return next(new AppError('The user belonging to this token no longer exists.', 401));

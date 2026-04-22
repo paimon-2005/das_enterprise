@@ -1,44 +1,45 @@
 const Order = require('../models/Order');
-const Product = require('../models/Product');
 const User = require('../models/User');
-const Category = require('../models/Category');
+const Product = require('../models/Product');
 const AppError = require('../utils/appError');
 
-const getDashboardStats = async (req, res, next) => {
+exports.getDashboardStats = async (req, res, next) => {
     try {
-        const totalRevenue = await Order.aggregate([
-            { $match: { isPaid: true } },
+        // Total Revenue from all orders
+        const revenueResult = await Order.aggregate([
+            { $match: { orderStatus: { $ne: 'cancelled' } } },
             { $group: { _id: null, total: { $sum: '$totalPrice' } } }
         ]);
+        const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
 
+        // Total Orders count
         const totalOrders = await Order.countDocuments();
-        const totalCustomers = await User.countDocuments({ role: 'customer' });
-        
-        const avgOrderValue = totalOrders > 0 ? (totalRevenue[0]?.total || 0) / totalOrders : 0;
 
-        // Recently added orders for dynamic feel
-        const recentOrders = await Order.find()
-            .populate('user')
-            .sort('-createdAt')
-            .limit(5);
+        // Total Shops (Dealers)
+        const totalShops = await User.countDocuments({ role: 'dealer' });
 
-        const stockAlerts = await Product.find({ stock: { $lte: 10 } })
-            .sort('stock')
-            .limit(3);
+        // Pending Orders
+        const pendingOrders = await Order.countDocuments({ orderStatus: 'pending' });
+
+        // Total Dues from all dealers
+        const duesResult = await User.aggregate([
+            { $match: { role: 'dealer' } },
+            { $group: { _id: null, total: { $sum: '$currentDue' } } }
+        ]);
+        const totalDues = duesResult.length > 0 ? duesResult[0].total : 0;
+
+        // Low Stock Products (<= 10)
+        const lowStockProducts = await Product.countDocuments({ stock: { $lte: 10 } });
 
         res.status(200).json({
             success: true,
-            data: {
-                totalRevenue: totalRevenue[0]?.total || 0,
-                revenueGrowth: 12.5,
+            stats: {
+                totalRevenue,
                 totalOrders,
-                ordersGrowth: 8.2,
-                totalCustomers,
-                customersGrowth: 15.1,
-                avgOrderValue,
-                avgOrderValueGrowth: 2.4,
-                recentOrders,
-                stockAlerts
+                totalShops,
+                pendingOrders,
+                totalDues,
+                lowStockProducts
             }
         });
     } catch (error) {
@@ -46,147 +47,61 @@ const getDashboardStats = async (req, res, next) => {
     }
 };
 
-
-const getRevenueData = async (req, res, next) => {
+exports.getAllShops = async (req, res, next) => {
     try {
-        // Mock data for Recharts as requested
-        const revenueData = [
-            { month: 'Oct', revenue: 450000, orders: 120 },
-            { month: 'Nov', revenue: 520000, orders: 145 },
-            { month: 'Dec', revenue: 610000, orders: 190 },
-            { month: 'Jan', revenue: 580000, orders: 170 },
-            { month: 'Feb', revenue: 720000, orders: 210 },
-            { month: 'Mar', revenue: 850000, orders: 240 },
-            { month: 'Apr', revenue: 912450, orders: 265 },
-        ];
+        const { area, paymentTerm, isActive } = req.query;
+        let query = { role: 'dealer' };
 
-        const categoryRevenue = [
-            { name: 'Grains & Rice', value: 34 },
-            { name: 'Oils & Fats', value: 22 },
-            { name: 'Spices', value: 18 },
-            { name: 'Dairy', value: 14 },
-            { name: 'Beverages', value: 12 },
-        ];
+        if (area) query.area = area;
+        if (paymentTerm) query.paymentTerm = paymentTerm;
+        if (isActive !== undefined) query.isActive = isActive === 'true';
 
-        res.status(200).json({
-            success: true,
-            data: {
-                revenueHistory: revenueData,
-                categoryDistribution: categoryRevenue
-            }
-        });
-    } catch (error) {
-        next(error);
-    }
-};
+        const shops = await User.find(query).sort('-createdAt');
 
-const getAdminOrders = async (req, res, next) => {
-    try {
-        const orders = await Order.find()
-            .populate('user')
-            .sort('-createdAt');
-
-
-        res.status(200).json({
-            success: true,
-            data: orders,
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-const updateOrderStatus = async (req, res, next) => {
-    try {
-        const { status } = req.body;
-        const order = await Order.findById(req.params.id);
-
-        if (!order) {
-            return next(new AppError('Order not found', 404));
-        }
-
-        order.orderStatus = status;
-        if (status === 'delivered') {
-            order.isDelivered = true;
-            order.deliveredAt = Date.now();
-        }
-
-        await order.save();
-
-        res.status(200).json({
-            success: true,
-            data: order,
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-const getAdminStock = async (req, res, next) => {
-    try {
-        const products = await Product.find()
-            .sort('stock');
-
-        res.status(200).json({
-            success: true,
-            data: products,
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-const updateProductStock = async (req, res, next) => {
-    try {
-        const { stock } = req.body;
-        const product = await Product.findByIdAndUpdate(req.params.id, { stock }, { new: true });
-
-        if (!product) {
-            return next(new AppError('Product not found', 404));
-        }
-
-        res.status(200).json({
-            success: true,
-            data: product,
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-const getAdminCustomers = async (req, res, next) => {
-    try {
-        const customers = await User.find({ role: 'customer' });
-        
-        // Enrich customer data with order totals
-        const customersWithStats = await Promise.all(customers.map(async (customer) => {
-            const orders = await Order.find({ user: customer._id });
-            const totalSpent = orders.reduce((sum, order) => sum + order.totalPrice, 0);
-            const lastOrder = orders.length > 0 ? orders[orders.length - 1].createdAt : null;
+        // Add additional stats for each shop
+        const shopsWithStats = await Promise.all(shops.map(async (shop) => {
+            const orderStats = await Order.aggregate([
+                { $match: { dealer: shop._id } },
+                { $group: { _id: null, count: { $sum: 1 }, totalSpent: { $sum: '$totalPrice' } } }
+            ]);
 
             return {
-                ...customer.toObject(),
-                totalOrders: orders.length,
-                totalSpent,
-                lastOrderDate: lastOrder
+                ...shop.toObject(),
+                orderCount: orderStats.length > 0 ? orderStats[0].count : 0,
+                totalSpent: orderStats.length > 0 ? orderStats[0].totalSpent : 0
             };
         }));
 
         res.status(200).json({
             success: true,
-            data: customersWithStats,
+            count: shopsWithStats.length,
+            shops: shopsWithStats
         });
     } catch (error) {
         next(error);
     }
 };
 
-module.exports = {
-    getDashboardStats,
-    getRevenueData,
-    getAdminOrders,
-    updateOrderStatus,
-    getAdminStock,
-    updateProductStock,
-    getAdminCustomers
+exports.updateShopCredit = async (req, res, next) => {
+    try {
+        const { creditLimit, paymentTerm, isActive } = req.body;
+        const shop = await User.findById(req.params.id);
+
+        if (!shop || shop.role !== 'dealer') {
+            return next(new AppError('Shop not found', 404));
+        }
+
+        if (creditLimit !== undefined) shop.creditLimit = creditLimit;
+        if (paymentTerm) shop.paymentTerm = paymentTerm;
+        if (isActive !== undefined) shop.isActive = isActive;
+
+        await shop.save();
+
+        res.status(200).json({
+            success: true,
+            shop
+        });
+    } catch (error) {
+        next(error);
+    }
 };

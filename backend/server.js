@@ -19,10 +19,12 @@ const app = express();
 
 // Security Middlewares
 app.use(helmet());
-app.use(cors({
-    origin: 'http://localhost:5173', // Vite frontend
-    credentials: true
-}));
+// CORS configuration
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'development' ? true : 'http://localhost:5173',
+    credentials: true,
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Development logging
@@ -45,14 +47,12 @@ const adminRoutes = require('./routes/adminRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const areaRoutes = require('./routes/areaRoutes');
-const dealerRoutes = require('./routes/dealerRoutes');
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/areas', areaRoutes);
-app.use('/api/v1/dealers', dealerRoutes);
 
 
 // Error Handling Middleware
@@ -70,7 +70,8 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 createDefaultAdmin().then(() => {
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+        console.log(`📡 Accessible on your network at: http://YOUR_IP:${PORT}`);
     });
 });

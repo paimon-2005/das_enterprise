@@ -6,14 +6,15 @@ import {
     Mail, Lock, Briefcase, FileText, Loader2
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useGetAreasQuery } from '../../features/areas/areasApi';
 import { useRegisterMutation } from '../../features/auth/authApi';
 import { toast } from 'react-hot-toast';
+
+// Static delivery areas — admin knows all shops (max 60), no DB lookup needed
+const AREAS = ['Mogra', 'Jirat', 'Kuntighat'];
 
 const RegisterShop = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
-    const { data: areasResult, isLoading: loadingAreas } = useGetAreasQuery();
     const [register, { isLoading: isRegistering }] = useRegisterMutation();
 
     const [formData, setFormData] = useState({
@@ -30,7 +31,6 @@ const RegisterShop = () => {
         paymentTerm: 'cash'
     });
 
-    const areas = areasResult?.data || [];
 
     const handleNext = () => setStep(s => s + 1);
     const handleBack = () => setStep(s => s - 1);
@@ -232,8 +232,8 @@ const RegisterShop = () => {
                                             onChange={(e) => setFormData({...formData, area: e.target.value})}
                                         >
                                             <option value="">Select Area</option>
-                                            {areas.map(area => (
-                                                <option key={area._id} value={area._id}>{area.name}</option>
+                                            {AREAS.map(area => (
+                                                <option key={area} value={area}>{area}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -241,7 +241,6 @@ const RegisterShop = () => {
                                 <div>
                                     <label className={labelClasses}>Full Shop Address</label>
                                     <textarea 
-                                        required
                                         className={`${inputClasses} h-32 resize-none`}
                                         placeholder="Enter complete physical address..."
                                         value={formData.shopAddress}
@@ -259,7 +258,7 @@ const RegisterShop = () => {
                                     </button>
                                     <button 
                                         onClick={handleNext}
-                                        disabled={!formData.shopName || !formData.area || !formData.shopAddress}
+                                        disabled={!formData.shopName || !formData.area}
                                         className="flex-[2] bg-primary-600 hover:bg-primary-700 text-white py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
                                     >
                                         Next Step

@@ -5,7 +5,6 @@ import {
     MessageCircle, MapPin, Loader2, ChevronRight
 } from 'lucide-react';
 import { useGetDealersQuery, useApproveDealerMutation, useRejectDealerMutation } from '../../features/dealers/dealersApi';
-import { useGetAreasQuery } from '../../features/areas/areasApi';
 import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,11 +18,11 @@ const Dealers = () => {
     });
 
     const { data: dealersResult, isLoading } = useGetDealersQuery(filters);
-    const { data: areasResult } = useGetAreasQuery();
     
     const dealers = dealersResult?.data || [];
     const stats = dealersResult?.stats || { total: 0, approved: 0, pending: 0, totalDues: 0 };
-    const areas = areasResult?.data || [];
+    // Static delivery areas — admin knows all shops (max 60), no DB lookup needed
+    const AREAS = ['Mogra', 'Jirat', 'Kuntighat'];
 
     const [approveDealer] = useApproveDealerMutation();
     const [rejectDealer] = useRejectDealerMutation();
@@ -107,7 +106,7 @@ const Dealers = () => {
                             <div key={dealer._id} className="bg-white p-6 rounded-3xl shadow-sm border border-orange-100 flex items-center justify-between hover:shadow-md transition-all">
                                 <div>
                                     <h4 className="font-bold text-gray-900">{dealer.shopName}</h4>
-                                    <p className="text-sm text-gray-500">{dealer.ownerName} • {dealer.area?.name}</p>
+                                    <p className="text-sm text-gray-500">{dealer.shopName} • {dealer.area}</p>
                                 </div>
                                 <div className="flex gap-2">
                                     <button 
@@ -150,8 +149,8 @@ const Dealers = () => {
                         className="bg-white border-none rounded-2xl py-3 px-6 text-sm font-medium focus:ring-2 focus:ring-primary-600 shadow-sm cursor-pointer"
                     >
                         <option value="">All Areas</option>
-                        {areas.map(area => (
-                            <option key={area._id} value={area._id}>{area.name}</option>
+                        {AREAS.map(area => (
+                            <option key={area} value={area}>{area}</option>
                         ))}
                     </select>
 
@@ -201,7 +200,7 @@ const Dealers = () => {
                                     </td>
                                     <td className="px-8 py-6">
                                         <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                                            {dealer.area?.name || 'Unassigned'}
+                                            {dealer.area || 'Unassigned'}
                                         </span>
                                     </td>
                                     <td className="px-8 py-6">

@@ -109,7 +109,7 @@ const TopHeader = () => {
                           <div key={dealer._id} className="p-4 border-b border-gray-50 hover:bg-gray-50 transition-all flex items-center justify-between group">
                             <Link to={`/admin/dealers/${dealer._id}`} onClick={() => setShowNotifications(false)} className="flex-1">
                               <p className="text-sm font-bold text-gray-900 group-hover:text-primary-600 transition-colors uppercase tracking-tight">{dealer.shopName}</p>
-                              <p className="text-[10px] text-gray-400 font-bold uppercase">{dealer.area?.name || 'No Area'}</p>
+                              <p className="text-[10px] text-gray-400 font-bold uppercase">{dealer.area || 'No Area'}</p>
                             </Link>
                             <button 
                               onClick={(e) => handleQuickApprove(e, dealer._id)}

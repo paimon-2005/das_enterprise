@@ -1,26 +1,19 @@
 const express = require('express');
 const { 
     getDashboardStats, 
-    getRevenueData, 
-    getAdminOrders, 
-    updateOrderStatus,
-    getAdminStock,
-    updateProductStock,
-    getAdminCustomers
+    getAllShops, 
+    updateShopCredit 
 } = require('../controllers/adminController');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
+// All routes are admin only
 router.use(protect);
 router.use(restrictTo('admin'));
 
 router.get('/stats', getDashboardStats);
-router.get('/revenue', getRevenueData);
-router.get('/orders', getAdminOrders);
-router.put('/orders/:id/status', updateOrderStatus);
-router.get('/stock', getAdminStock);
-router.put('/stock/:id', updateProductStock);
-router.get('/customers', getAdminCustomers);
+router.get('/shops', getAllShops);
+router.put('/shops/:id/credit', updateShopCredit);
 
 module.exports = router;
