@@ -9,10 +9,12 @@ const {
 } = require('../controllers/orderController');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 
+const { validateOrder } = require('../middleware/validate');
+
 const router = express.Router();
 
 // Publicly logged in (Dealer or Admin)
-router.post('/', protect, createOrder);
+router.post('/', protect, validateOrder, createOrder);
 router.get('/my-orders', protect, getMyOrders);
 router.get('/:id', protect, getOrderById);
 

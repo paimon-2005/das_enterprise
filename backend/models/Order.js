@@ -52,11 +52,31 @@ const orderSchema = new mongoose.Schema(
                     type: Number,
                     required: true,
                 },
+                mrp: Number,
+                hsnCode: String,
+                gstPercent: {
+                    type: Number,
+                    default: 5,
+                },
+                discountPercent: {
+                    type: Number,
+                    default: 0,
+                },
+                taxableAmount: Number,
+                gstAmount: Number,
                 total: {
                     type: Number,
                     required: true,
                 },
             },
+        ],
+        taxBreakdown: [
+            {
+                slab: Number, // 5, 12, 18, 28
+                taxableValue: Number,
+                cgst: Number,
+                sgst: Number,
+            }
         ],
         
         subtotal: {

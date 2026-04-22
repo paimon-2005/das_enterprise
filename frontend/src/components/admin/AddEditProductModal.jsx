@@ -21,6 +21,10 @@ const productSchema = z.object({
     stock: z.coerce.number().min(0, 'Invalid stock'),
     minOrderQty: z.coerce.number().min(1).default(1),
     sku: z.string().min(3, 'SKU required'),
+    hsnCode: z.string().optional(),
+    mrp: z.coerce.number().min(0).default(0),
+    gstPercent: z.coerce.number().min(0).default(5),
+    discountPercent: z.coerce.number().min(0).default(0),
     tags: z.string().optional(),
     isActive: z.boolean().default(true),
     isFeatured: z.boolean().default(false),
@@ -157,6 +161,31 @@ const AddEditProductModal = ({ isOpen, onClose, product }) => {
                                         <div>
                                             <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Price ₹</label>
                                             <input type="number" {...register('price')} className="w-full bg-[#1c222b] border border-[#2d3643] rounded-xl px-4 py-3 text-white outline-none font-black text-lg" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">MRP ₹</label>
+                                            <input type="number" {...register('mrp')} className="w-full bg-[#1c222b] border border-[#2d3643] rounded-xl px-4 py-3 text-white outline-none font-black text-lg" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">GST %</label>
+                                            <select {...register('gstPercent')} className="w-full bg-[#1c222b] border border-[#2d3643] rounded-xl px-4 py-3 text-white outline-none font-bold">
+                                                <option value="5">5%</option>
+                                                <option value="12">12%</option>
+                                                <option value="18">18%</option>
+                                                <option value="28">28%</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Discount %</label>
+                                            <input type="number" {...register('discountPercent')} className="w-full bg-[#1c222b] border border-[#2d3643] rounded-xl px-4 py-3 text-white outline-none font-black" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">HSN Code</label>
+                                            <input {...register('hsnCode')} className="w-full bg-[#1c222b] border border-[#2d3643] rounded-xl px-4 py-3 text-white outline-none font-bold" />
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Stock Qty</label>

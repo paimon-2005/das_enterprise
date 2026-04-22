@@ -64,7 +64,7 @@ const Checkout = () => {
             const res = await createOrder(orderData).unwrap();
             toast.success('Order placed successfully!');
             dispatch(clearCart());
-            navigate(`/shop/my-orders`);
+            navigate(`/dealer/order-success/${res.order._id}`);
         } catch (err) {
             toast.error(err?.data?.message || 'Failed to place order');
         }

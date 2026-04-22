@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const createDefaultAdmin = require('./createAdmin');
+const errorHandler = require('./middleware/errorHandler');
 
 // Load env vars
 dotenv.config();
@@ -17,28 +18,62 @@ connectDB();
 // Initialize express
 const app = express();
 
-// Security Middlewares
-app.use(helmet());
-// CORS configuration
+// 11. Disable x-powered-by
+app.disable('x-powered-by');
+
+// 1. Helmet (Security headers)
+app.use(helmet({
+    contentSecurityPolicy: false
+}));
+
+// 12. Manual Security Headers
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    next();
+});
+
+// 2. CORS configuration
 const corsOptions = {
-    origin: process.env.NODE_ENV === 'development' ? true : 'http://localhost:5173',
+    origin: process.env.NODE_ENV === 'development' ? true : process.env.FRONTEND_URL,
     credentials: true,
 };
 app.use(cors(corsOptions));
-app.use(express.json());
 
-// Development logging
+// 10. Logging
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
+} else {
+    app.use(morgan('combined'));
 }
 
-// Rate limiting
-const limiter = rateLimit({
+// 3. Global Rate Limiting (100 requests / 15 min)
+const globalLimiter = rateLimit({
     max: 100,
-    windowMs: 60 * 60 * 1000,
-    message: 'Too many requests from this IP, please try again in an hour'
+    windowMs: 15 * 60 * 1000,
+    message: 'Too many requests from this IP, please try again in 15 minutes'
 });
-app.use('/api', limiter);
+app.use('/api', globalLimiter);
+
+// 4. Login Rate Limiting (5 attempts / 15 min)
+const loginLimiter = rateLimit({
+    max: 5,
+    windowMs: 15 * 60 * 1000,
+    message: 'Too many login attempts, please try again in 15 minutes'
+});
+app.use('/api/v1/auth/login', loginLimiter);
+
+// 5. Register Rate Limiting (10 attempts / hour)
+const registerLimiter = rateLimit({
+    max: 10,
+    windowMs: 60 * 60 * 1000,
+    message: 'Too many registration attempts, please try again in an hour'
+});
+app.use('/api/v1/auth/register', registerLimiter);
+
+// 6. Body parser
+app.use(express.json({ limit: '10kb' }));
 
 // Routes
 app.get('/api/v1/health', (req, res) => res.status(200).json({ status: 'ok', timestamp: new Date() }));
@@ -54,17 +89,14 @@ app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/areas', areaRoutes);
 
+// 404 handler
+app.use((req, res, next) => {
+    const AppError = require('./utils/appError');
+    next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
 
 // Error Handling Middleware
-app.use((err, req, res, next) => {
-    err.statusCode = err.statusCode || 500;
-    err.status = err.status || 'error';
-
-    res.status(err.statusCode).json({
-        status: err.status,
-        message: err.message,
-    });
-});
+app.use(errorHandler);
 
 // Seed admin and start server
 const PORT = process.env.PORT || 5000;
@@ -72,6 +104,8 @@ const PORT = process.env.PORT || 5000;
 createDefaultAdmin().then(() => {
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-        console.log(`📡 Accessible on your network at: http://YOUR_IP:${PORT}`);
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`📡 Accessible on your network at: http://YOUR_IP:${PORT}`);
+        }
     });
 });

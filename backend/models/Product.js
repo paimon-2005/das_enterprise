@@ -63,6 +63,22 @@ const productSchema = new mongoose.Schema(
             required: [true, 'SKU is required'],
             unique: true,
             trim: true,
+        },
+        hsnCode: {
+            type: String,
+            trim: true,
+        },
+        mrp: {
+            type: Number,
+            default: 0,
+        },
+        gstPercent: {
+            type: Number,
+            default: 5,
+        },
+        discountPercent: {
+            type: Number,
+            default: 0,
         }
     },
     {

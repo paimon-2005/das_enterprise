@@ -24,6 +24,7 @@ import DealerProducts from '../pages/dealer/DealerProducts';
 import DealerCart from '../pages/Cart'; // Reusing Cart or specialized DealerCart
 import DealerOrders from '../pages/dealer/DealerOrders';
 import DealerProfile from '../pages/dealer/DealerProfile';
+import OrderSuccess from '../pages/customer/OrderSuccess';
 
 // Guards
 import { RequireAdmin, RequireDealer } from '../components/auth/ProtectedRoute';
@@ -57,6 +58,7 @@ export const router = createBrowserRouter([
                     { path: 'cart', element: <DealerCart /> },
                     { path: 'orders', element: <DealerOrders /> },
                     { path: 'profile', element: <DealerProfile /> },
+                    { path: 'order-success/:id', element: <OrderSuccess /> },
                 ],
             },
         ],

@@ -15,8 +15,15 @@ exports.createOrder = async (req, res, next) => {
         const user = await User.findById(req.user._id);
         if (!user) return next(new AppError('User not found', 404));
 
-        let subtotal = 0;
+        let totalSubtotal = 0;
+        let totalTax = 0;
         const processedItems = [];
+        const taxSlabs = {
+            5: { taxable: 0, cgst: 0, sgst: 0 },
+            12: { taxable: 0, cgst: 0, sgst: 0 },
+            18: { taxable: 0, cgst: 0, sgst: 0 },
+            28: { taxable: 0, cgst: 0, sgst: 0 }
+        };
 
         // Process items, fetch product details, snapshot them
         for (const item of items) {
@@ -26,15 +33,35 @@ exports.createOrder = async (req, res, next) => {
                 return next(new AppError(`Insufficient stock for ${product.name}`, 400));
             }
 
-            const itemTotal = product.price * item.quantity;
-            subtotal += itemTotal;
+            const baseAmount = product.price * item.quantity;
+            const discountAmount = (baseAmount * (product.discountPercent || 0)) / 100;
+            const taxableAmount = baseAmount - discountAmount;
+            const gstAmount = (taxableAmount * (product.gstPercent || 0)) / 100;
+            const itemTotal = taxableAmount + gstAmount;
+
+            totalSubtotal += taxableAmount;
+            totalTax += gstAmount;
+
+            // Update tax slab info
+            const slab = product.gstPercent || 18;
+            if (taxSlabs[slab]) {
+                taxSlabs[slab].taxable += taxableAmount;
+                taxSlabs[slab].cgst += gstAmount / 2;
+                taxSlabs[slab].sgst += gstAmount / 2;
+            }
 
             processedItems.push({
                 product: product._id,
                 productName: product.name,
                 quantity: item.quantity,
                 price: product.price,
-                total: itemTotal
+                mrp: product.mrp,
+                hsnCode: product.hsnCode,
+                gstPercent: product.gstPercent,
+                discountPercent: product.discountPercent,
+                taxableAmount: Math.round(taxableAmount * 100) / 100,
+                gstAmount: Math.round(gstAmount * 100) / 100,
+                total: Math.round(itemTotal * 100) / 100
             });
 
             // Reduce stock
@@ -42,21 +69,30 @@ exports.createOrder = async (req, res, next) => {
             await product.save();
         }
 
-        const tax = Math.round(subtotal * 0.18); // 18% GST
-        const totalPrice = subtotal + tax;
+        const taxBreakdown = Object.entries(taxSlabs)
+            .filter(([_, data]) => data.taxable > 0)
+            .map(([slab, data]) => ({
+                slab: parseInt(slab),
+                taxableValue: Math.round(data.taxable * 100) / 100,
+                cgst: Math.round(data.cgst * 100) / 100,
+                sgst: Math.round(data.sgst * 100) / 100
+            }));
 
-        // Create Order — area is a plain string snapshot from user profile
+        const totalPrice = Math.round((totalSubtotal + totalTax) * 100) / 100;
+
+        // Create Order
         const order = await Order.create({
             dealer: user._id,
             shopName: user.shopName,
             ownerName: user.name,
-            area: user.area,          // 'Mogra' | 'Jirat' | 'Kuntighat'
+            area: user.area,
             shopAddress: user.shopAddress,
             phone: user.phone,
             paymentTerm: user.paymentTerm,
             items: processedItems,
-            subtotal,
-            tax,
+            taxBreakdown,
+            subtotal: Math.round(totalSubtotal * 100) / 100,
+            tax: Math.round(totalTax * 100) / 100,
             totalPrice,
             notes
         });

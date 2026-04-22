@@ -1,14 +1,15 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useGetOrderQuery } from '../../features/orders/ordersApi';
+import { useGetOrderByIdQuery } from '../../features/orders/ordersApi';
 import { 
     ArrowLeft, Store, User, MapPin, Phone, CreditCard, Calendar,
-    Hash, Package, IndianRupee, Loader2, Truck, Clock, CheckCircle2, XCircle
+    Hash, Package, IndianRupee, Loader2, Truck, Clock, CheckCircle2, XCircle, FileText
 } from 'lucide-react';
+import InvoicePDF from '../../components/orders/InvoicePDF';
 
 const OrderDetail = () => {
     const { id } = useParams();
-    const { data: orderData, isLoading } = useGetOrderQuery(id);
+    const { data: orderData, isLoading } = useGetOrderByIdQuery(id);
     const order = orderData?.order;
 
     const getStatusStyle = (status) => {
@@ -54,6 +55,21 @@ const OrderDetail = () => {
                     <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 font-black text-sm uppercase ${statusStyle.badge}`}>
                         {statusStyle.icon}
                         {order.orderStatus}
+                    </div>
+                </div>
+
+                <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center">
+                            <FileText className="w-6 h-6 text-[#16a34a]" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">Professional Invoice</h3>
+                            <p className="text-xs font-bold text-gray-400 uppercase">DAS ENTERPRISE FORMAT</p>
+                        </div>
+                    </div>
+                    <div className="w-full md:w-auto scale-90 md:scale-100">
+                        <InvoicePDF order={order} />
                     </div>
                 </div>
 
