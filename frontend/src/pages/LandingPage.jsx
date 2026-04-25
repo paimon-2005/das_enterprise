@@ -48,7 +48,7 @@ const LandingPage = () => {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             <Navbar onOpenLogin={() => setIsLoginModalOpen(true)} />
-            
+
             <main className="flex-1">
                 {/* HERO SECTION */}
                 <section className="relative w-full bg-gradient-to-r from-[#16a34a] to-[#15803d] overflow-hidden">
@@ -76,16 +76,16 @@ const LandingPage = () => {
                                 </div>
 
                             </div>
-                            
+
                             {/* Hero Image */}
                             <div className="w-full md:w-1/2 relative">
                                 <div className="absolute inset-0 bg-white/20 rounded-full blur-3xl filter transform scale-110"></div>
-                                <img 
-                                    src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" 
-                                    alt="Fresh produce and groceries" 
+                                <img
+                                    src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80"
+                                    alt="Fresh produce and groceries"
                                     className="relative z-10 w-full h-[400px] object-cover rounded-2xl shadow-2xl origin-bottom animate-in slide-in-from-right-10 duration-1000"
                                 />
-                                
+
                                 {/* Floating Badges */}
                                 <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-xl shadow-xl z-20 animate-bounce delay-100 flex items-center gap-3">
                                     <div className="bg-yellow-100 p-2 rounded-full text-yellow-600"><Star size={24} fill="currentColor" /></div>
@@ -108,19 +108,19 @@ const LandingPage = () => {
                                 <p className="text-gray-500">Explore our wide range of premium wholesale products.</p>
                             </div>
                         </div>
-                        
+
                         {/* Horizontal Scroll Container */}
                         <div className="flex overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 gap-6 hide-scroll-bar">
                             {CATEGORIES.map(cat => (
-                                <button 
-                                    key={cat.id} 
+                                <button
+                                    key={cat.id}
                                     onClick={() => navigate(`/products?category=${encodeURIComponent(cat.name.split(' ')[0].toLowerCase())}`)}
                                     className="min-w-[180px] flex-shrink-0 bg-white border border-gray-100 rounded-3xl p-8 flex flex-col items-center justify-center gap-6 hover:shadow-2xl hover:border-[#16a34a] transition-all group flex-1"
                                 >
                                     <div className="h-16 flex items-center justify-center">
-                                        <img 
-                                            src={cat.image} 
-                                            alt={cat.name} 
+                                        <img
+                                            src={cat.image}
+                                            alt={cat.name}
                                             className="h-full object-contain group-hover:scale-110 transition-transform"
                                         />
                                     </div>
@@ -155,15 +155,15 @@ const LandingPage = () => {
                                 View All Products <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                             {PROMOTED_PRODUCTS.map(product => (
                                 <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all group">
                                     {/* Image Container */}
                                     <div className="relative h-56 overflow-hidden">
-                                        <img 
-                                            src={product.image} 
-                                            alt={product.name} 
+                                        <img
+                                            src={product.image}
+                                            alt={product.name}
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                         />
                                         <button className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md text-gray-400 hover:text-red-500 transition-colors">
@@ -175,36 +175,34 @@ const LandingPage = () => {
                                             </span>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Content */}
                                     <div className="p-5">
                                         <div className="flex justify-between items-start mb-2">
                                             <h3 className="font-bold text-gray-900 text-lg leading-tight line-clamp-2">{product.name}</h3>
                                         </div>
-                                        
+
                                         <div className="flex items-center gap-1 text-yellow-500 text-sm mb-4">
                                             <Star size={14} fill="currentColor" />
                                             <span className="font-medium text-gray-700">{product.rating}</span>
                                         </div>
-                                        
+
                                         <div className="flex items-center justify-between mb-4">
                                             <span className="text-2xl font-bold text-[#16a34a]">₹{product.price.toLocaleString('en-IN')}</span>
-                                            <span className={`text-xs font-bold px-2 py-1 rounded-md ${
-                                                product.stock === 'In Stock' ? 'bg-green-100 text-green-700' :
-                                                product.stock === 'Low Stock' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
-                                            }`}>
+                                            <span className={`text-xs font-bold px-2 py-1 rounded-md ${product.stock === 'In Stock' ? 'bg-green-100 text-green-700' :
+                                                    product.stock === 'Low Stock' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
+                                                }`}>
                                                 {product.stock}
                                             </span>
                                         </div>
-                                        
-                                        <button 
+
+                                        <button
                                             onClick={() => handleAddToCart(product)}
                                             disabled={product.stock === 'Out of Stock'}
-                                            className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
-                                                product.stock === 'Out of Stock' 
-                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                                                : 'bg-[#16a34a] text-white hover:bg-[#15803d] active:scale-95 shadow-md shadow-green-500/20'
-                                            }`}
+                                            className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${product.stock === 'Out of Stock'
+                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                    : 'bg-[#16a34a] text-white hover:bg-[#15803d] active:scale-95 shadow-md shadow-green-500/20'
+                                                }`}
                                         >
                                             <ShoppingCart size={18} />
                                             {product.stock === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
@@ -213,7 +211,7 @@ const LandingPage = () => {
                                 </div>
                             ))}
                         </div>
-                        
+
                         <div className="mt-10 text-center md:hidden">
                             <button onClick={() => navigate('/products')} className="text-[#16a34a] font-semibold flex py-3 px-6 bg-green-50 rounded-xl mx-auto items-center gap-2">
                                 View All Products <ArrowRight size={18} />
@@ -229,7 +227,7 @@ const LandingPage = () => {
                             <h2 className="text-3xl font-bold text-gray-900 font-jakarta mb-4">Why Das Enterprise?</h2>
                             <p className="text-gray-500 text-lg">We are committed to delivering the best quality products directly from farms and factories to your business.</p>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             {[
                                 { icon: Truck, title: 'Fast Delivery', desc: 'Next-day delivery across the metro region for all orders.' },
@@ -332,9 +330,9 @@ const LandingPage = () => {
             </footer>
 
             {/* Login Modal Overlay */}
-            <LoginModal 
-                isOpen={isLoginModalOpen} 
-                onClose={() => setIsLoginModalOpen(false)} 
+            <LoginModal
+                isOpen={isLoginModalOpen}
+                onClose={() => setIsLoginModalOpen(false)}
             />
         </div>
     );

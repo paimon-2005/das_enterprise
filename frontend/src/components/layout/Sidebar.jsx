@@ -9,116 +9,123 @@ import {
   Store,
   MapPin,
   LogOut,
-  ChefHat,
+  X,
+  Wheat,
   ChevronRight,
-  X
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { logout, selectCurrentUser } from '../../features/auth/authSlice';
 import { toast } from 'react-hot-toast';
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const user = useSelector(selectCurrentUser);
+  const dispatch  = useDispatch();
+  const navigate  = useNavigate();
+  const user      = useSelector(selectCurrentUser);
 
   const handleLogout = () => {
     dispatch(logout());
-    toast.success('Sign out successful');
+    toast.success('Signed out successfully');
     navigate('/login');
   };
 
   const adminMenu = [
-    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/admin/dashboard' },
-    { name: 'Order Management', icon: <ShoppingCart size={20} />, path: '/admin/orders' },
-    { name: 'Shop Partners', icon: <Store size={20} />, path: '/admin/shops' },
-    { name: 'Inventory Management', icon: <Package size={20} />, path: '/admin/products' },
-    { name: 'Stock Levels', icon: <Database size={20} />, path: '/admin/stock' },
-    { name: 'Delivery Areas', icon: <MapPin size={20} />, path: '/admin/areas' },
+    { name: 'Dashboard',           icon: <LayoutDashboard size={18} />, path: '/admin/dashboard' },
+    { name: 'Order Management',    icon: <ShoppingCart    size={18} />, path: '/admin/orders'    },
+    { name: 'Shop Partners',       icon: <Store           size={18} />, path: '/admin/shops'     },
+    { name: 'Product Catalogue',   icon: <Package         size={18} />, path: '/admin/products'  },
+    { name: 'Stock Management',    icon: <Database        size={18} />, path: '/admin/stock'     },
+    { name: 'Delivery Areas',      icon: <MapPin          size={18} />, path: '/admin/areas'     },
   ];
 
   return (
     <>
-      {/* Mobile Backdrop */}
+      {/* Mobile backdrop */}
       {isOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity" 
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
           onClick={onClose}
         />
       )}
 
       <aside className={clsx(
-        "w-72 bg-white h-screen fixed left-0 top-0 border-r-2 border-gray-100 flex flex-col z-50 shadow-sm transition-transform duration-300 lg:translate-x-0 lg:static lg:h-auto",
-        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-        "lg:fixed" // Keep it fixed on desktop
+        'w-[260px] bg-white h-screen fixed left-0 top-0 flex flex-col z-50',
+        'border-r border-gray-200 shadow-sm transition-transform duration-300',
+        'lg:translate-x-0',
+        isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
       )}>
-        
-        {/* Brand Header */}
-        <div className="p-6 border-b-2 border-gray-100 flex items-center justify-between">
+
+        {/* Brand header — dark primary */}
+        <div className="bg-primary-800 px-5 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="bg-[#16a34a] p-2.5 rounded-2xl text-white shadow-md shadow-green-200">
-              <ChefHat size={26} strokeWidth={2.5} />
+            <div className="bg-white/10 p-2 rounded-lg">
+              <Wheat size={22} className="text-white" strokeWidth={2} />
             </div>
             <div>
-              <h1 className="text-gray-900 font-black text-xl tracking-tight leading-none">
-                DAS <span className="text-[#16a34a]">Enterprise</span>
+              <h1 className="text-white font-bold text-base leading-none tracking-tight">
+                DAS Enterprise
               </h1>
-              <p className="text-[11px] font-bold tracking-widest text-gray-400 mt-1 uppercase">Administrator</p>
+              <p className="text-primary-200 text-[10px] font-medium mt-0.5 uppercase tracking-widest">
+                B2B Wholesale
+              </p>
             </div>
           </div>
-          {/* Mobile Close Button */}
-          <button 
+          <button
             onClick={onClose}
-            className="lg:hidden p-2 hover:bg-gray-50 rounded-xl text-gray-400"
+            className="lg:hidden text-white/60 hover:text-white p-1 rounded transition-colors"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-5 space-y-1 overflow-y-auto">
-          <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em] px-3 mb-3">Main Menu</p>
+        {/* Nav section label */}
+        <div className="px-5 pt-5 pb-1">
+          <p className="text-[10px] font-semibold text-txt-secondary uppercase tracking-[0.2em]">
+            Main Navigation
+          </p>
+        </div>
+
+        {/* Navigation links */}
+        <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
           {adminMenu.map((item) => (
             <NavLink
               key={item.name}
               to={item.path}
-              onClick={() => {
-                if (window.innerWidth < 1024) onClose();
-              }}
+              onClick={() => { if (window.innerWidth < 1024) onClose(); }}
               className={({ isActive }) => clsx(
-                "flex items-center justify-between px-4 py-3.5 rounded-xl font-bold transition-all group text-sm",
+                'flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all group',
                 isActive
-                  ? "bg-[#16a34a] text-white shadow-md shadow-green-200"
-                  : "text-gray-600 hover:bg-green-50 hover:text-[#16a34a]"
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-txt-secondary hover:bg-primary-50 hover:text-primary-700',
               )}
             >
               <div className="flex items-center gap-3">
-                <span className="transition-transform group-hover:scale-110">
-                  {item.icon}
-                </span>
+                <span className="shrink-0">{item.icon}</span>
                 <span>{item.name}</span>
               </div>
-              <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" />
+              <ChevronRight
+                size={14}
+                className="opacity-0 group-hover:opacity-60 transition-opacity"
+              />
             </NavLink>
           ))}
         </nav>
 
-        {/* Account Info at Bottom */}
-        <div className="p-4 border-t-2 border-gray-100">
-          <div className="bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl flex items-center gap-3 hover:border-gray-200 transition-all">
-            <div className="w-11 h-11 rounded-xl bg-[#16a34a] flex items-center justify-center text-white font-black text-lg shadow-sm shrink-0">
-              {user?.name?.charAt(0).toUpperCase()}
+        {/* User card at bottom */}
+        <div className="p-3 border-t border-gray-100 shrink-0">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-gray-100">
+            <div className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+              {user?.name?.charAt(0).toUpperCase() || 'A'}
             </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-gray-900 text-sm font-black truncate">{user?.name}</p>
-              <p className="text-xs text-gray-400 font-medium truncate">{user?.email}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-txt-primary text-sm font-semibold truncate">{user?.name || 'Admin'}</p>
+              <p className="text-txt-secondary text-xs truncate">{user?.email || ''}</p>
             </div>
             <button
               onClick={handleLogout}
-              className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-xl transition-all border border-gray-200 hover:border-red-100"
               title="Sign Out"
+              className="text-txt-secondary hover:text-red-500 p-1.5 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
             >
-              <LogOut size={16} />
+              <LogOut size={15} />
             </button>
           </div>
         </div>

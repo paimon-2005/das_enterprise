@@ -1,19 +1,19 @@
 import React, { useState, useMemo } from 'react';
-import { 
-    Plus, 
-    Search, 
-    Edit2, 
-    Trash2, 
-    Star, 
-    Package, 
-    AlertTriangle, 
+import {
+    Plus,
+    Search,
+    Edit2,
+    Trash2,
+    Star,
+    Package,
+    AlertTriangle,
     CheckCircle,
     Loader2,
     Image as ImageIcon,
 } from 'lucide-react';
-import { 
-    useGetProductsQuery, 
-    useDeleteProductMutation 
+import {
+    useGetProductsQuery,
+    useDeleteProductMutation
 } from '../../features/products/productsApi';
 import AddEditProductModal from '../../components/admin/AddEditProductModal';
 import toast from 'react-hot-toast';
@@ -27,7 +27,7 @@ const AdminProducts = () => {
     const { data: productsData, isLoading } = useGetProductsQuery({
         search: searchTerm,
         category: categoryFilter,
-        limit: 100 
+        limit: 100
     });
 
     const [deleteProduct] = useDeleteProductMutation();
@@ -63,7 +63,7 @@ const AdminProducts = () => {
 
     return (
         <div className="p-6 lg:p-8 space-y-6 bg-gray-50 min-h-screen">
-            
+
             {/* Header */}
             <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
                 <div>
@@ -73,7 +73,7 @@ const AdminProducts = () => {
                     </h1>
                     <p className="text-gray-400 text-sm font-medium mt-1">Manage global product catalog</p>
                 </div>
-                <button 
+                <button
                     onClick={() => { setSelectedProduct(null); setIsModalOpen(true); }}
                     className="bg-[#16a34a] hover:bg-[#15803d] text-white px-6 py-3.5 rounded-2xl font-black text-sm flex items-center gap-2 shadow-md shadow-green-200 transition-all active:scale-95"
                 >
@@ -104,15 +104,15 @@ const AdminProducts = () => {
             <div className="bg-white border-2 border-gray-100 p-4 rounded-2xl flex flex-col md:flex-row gap-3 shadow-sm">
                 <div className="relative flex-1">
                     <Search className="absolute left-4 top-3.5 text-gray-400" size={16} />
-                    <input 
-                        type="text" 
-                        placeholder="Search products..." 
+                    <input
+                        type="text"
+                        placeholder="Search products..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-900 focus:border-[#16a34a] outline-none transition-all font-medium text-sm"
                     />
                 </div>
-                <select 
+                <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
                     className="bg-gray-50 border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-700 outline-none focus:border-[#16a34a] cursor-pointer"
@@ -168,7 +168,7 @@ const AdminProducts = () => {
                                         <span className="text-[10px] font-black text-gray-400 uppercase">{product.sku}</span>
                                     </div>
                                     <h3 className="text-base font-black text-gray-900 tracking-tight leading-tight line-clamp-1">{product.name}</h3>
-                                    
+
                                     <div className="mt-auto pt-4 flex items-center justify-between">
                                         <div>
                                             <span className="text-2xl font-black text-gray-900">₹{product.price}</span>
@@ -189,9 +189,9 @@ const AdminProducts = () => {
             )}
 
             {isModalOpen && (
-                <AddEditProductModal 
-                    isOpen={isModalOpen} 
-                    onClose={() => setIsModalOpen(false)} 
+                <AddEditProductModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
                     product={selectedProduct}
                 />
             )}

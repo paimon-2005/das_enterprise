@@ -1,45 +1,56 @@
 import React from 'react';
-import { Bell, Search, ChevronDown, User, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { Bell, Search, ChevronDown, Settings } from 'lucide-react';
 
+/**
+ * Admin panel top header — standalone version used inside the admin sidebar layout.
+ * Page title is static; real dynamic version is in components/layout/TopHeader.jsx
+ */
 const TopHeader = () => {
-    const pageTitle = "Dashboard"; // This would dynamic in a real app based on route
-
     return (
-        <header className="h-16 bg-white border-b border-gray-200 px-8 flex items-center justify-between sticky top-0 z-40">
+        <header className="h-14 bg-card border-b border-gray-200 px-6 flex items-center justify-between sticky top-0 z-40 shadow-sm">
+
+            {/* Page context */}
+            <div>
+                <h2 className="text-sm font-semibold text-txt-primary">Admin Panel</h2>
+                <p className="text-[11px] text-txt-secondary">DAS Enterprise</p>
+            </div>
+
             {/* Search */}
-            <div className="flex-1 max-w-md">
+            <div className="flex-1 max-w-sm mx-6">
                 <div className="relative group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-500 transition-colors" size={18} />
-                    <input 
-                        type="text" 
-                        placeholder="Search for orders, products, customers..." 
-                        className="w-full bg-gray-50 border-transparent border focus:bg-white focus:border-primary-100 focus:ring-4 focus:ring-primary-50 rounded-lg py-2 pl-10 pr-4 text-sm outline-none transition-all"
+                    <Search
+                        size={15}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-txt-secondary group-focus-within:text-primary-600 transition-colors"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Search orders, products, shops…"
+                        className="w-full bg-surface border border-gray-200 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/15
+                                   rounded-lg py-2 pl-9 pr-4 text-sm outline-none transition-all text-txt-primary placeholder:text-txt-secondary"
                     />
                 </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-6">
-                <button className="relative text-gray-500 hover:text-primary-600 p-2 hover:bg-primary-50 rounded-full transition-all">
-                    <Bell size={20} />
-                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+            {/* Right actions */}
+            <div className="flex items-center gap-2">
+                <button className="relative p-2 text-txt-secondary hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all">
+                    <Bell size={18} />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent-500 rounded-full border-2 border-white" />
                 </button>
-
-                <div className="h-8 w-px bg-gray-200"></div>
-
-                <div className="flex items-center gap-3 cursor-pointer group">
+                <button className="p-2 text-txt-secondary hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all">
+                    <Settings size={18} />
+                </button>
+                <div className="w-px h-6 bg-gray-200 mx-1" />
+                <div className="flex items-center gap-2 cursor-pointer group pl-1">
                     <div className="text-right hidden sm:block">
-                        <p className="text-sm font-bold text-gray-900 leading-none">Abhijit Kumar</p>
-                        <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider font-semibold">Store Manager</p>
+                        <p className="text-sm font-semibold text-txt-primary leading-none">Admin User</p>
+                        <p className="text-[10px] text-txt-secondary mt-0.5 uppercase tracking-wider font-medium">Administrator</p>
                     </div>
-                    <div className="relative">
-                        <div className="w-10 h-10 rounded-full bg-gray-200 border-2 border-transparent group-hover:border-primary-500 transition-all flex items-center justify-center overflow-hidden">
-                             <img src="https://ui-avatars.com/api/?name=Abhijit+Kumar&background=16a34a&color=fff" alt="avatar" />
-                        </div>
-                        <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
-                             <ChevronDown size={12} className="text-gray-500" />
-                        </div>
+                    <div className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-sm
+                                    ring-2 ring-transparent group-hover:ring-primary-300 transition-all">
+                        A
                     </div>
+                    <ChevronDown size={14} className="text-txt-secondary" />
                 </div>
             </div>
         </header>

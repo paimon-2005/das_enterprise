@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const dns = require('dns');
+
+// Force Node.js to use Google's public DNS (8.8.8.8) for SRV record resolution.
+dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
 const User = require('./models/User');
 
 dotenv.config();
@@ -11,7 +15,11 @@ const createDefaultAdmin = async () => {
             return;
         }
 
-        await mongoose.connect(process.env.MONGO_URI);
+        if (mongoose.connection.readyState !== 1) {
+            await mongoose.connect(process.env.MONGO_URI, {
+                dbName: 'foodco-db',
+            });
+        }
         
         const adminEmail = 'mriabhi2005@gmail.com';
         const adminPass = 'anu@2005';

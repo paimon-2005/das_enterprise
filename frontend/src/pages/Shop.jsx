@@ -12,10 +12,10 @@ const CATEGORIES = ['All', 'Grains & Rice', 'Oils & Fats', 'Spices', 'Dairy', 'B
 const Shop = () => {
     const dispatch = useDispatch();
     const [searchParams, setSearchParams] = useSearchParams();
-    
+
     const urlCategory = searchParams.get('category');
     const urlSearch = searchParams.get('search') || '';
-    
+
     const [selectedCategory, setSelectedCategory] = useState(urlCategory || 'All');
     const [searchQuery, setSearchQuery] = useState(urlSearch);
     const [inStockOnly, setInStockOnly] = useState(false);
@@ -65,9 +65,9 @@ const Shop = () => {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             <Navbar />
-            
+
             <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-                
+
                 <div className="mb-8">
                     <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">Shop Our Products</h1>
                     <p className="text-gray-500 font-medium">Find the massive wholesale collection of all premium ingredients.</p>
@@ -86,8 +86,8 @@ const Shop = () => {
                                 <h3 className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest leading-none">Search</h3>
                                 <div className="relative">
                                     <Search className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         value={searchQuery}
                                         onChange={handleSearchChange}
                                         placeholder="Rice, Spices..."
@@ -101,7 +101,7 @@ const Shop = () => {
                                 <ul className="space-y-2">
                                     {CATEGORIES.map(cat => (
                                         <li key={cat}>
-                                            <button 
+                                            <button
                                                 onClick={() => handleCategoryClick(cat)}
                                                 className={`text-sm font-bold transition-all ${selectedCategory === cat ? 'text-[#16a34a] translate-x-1' : 'text-gray-500 hover:text-[#16a34a]'}`}
                                             >
@@ -115,8 +115,8 @@ const Shop = () => {
                             <div>
                                 <h3 className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest">Availability</h3>
                                 <label className="flex items-center gap-3 cursor-pointer group">
-                                    <input 
-                                        type="checkbox" 
+                                    <input
+                                        type="checkbox"
                                         checked={inStockOnly}
                                         onChange={(e) => setInStockOnly(e.target.checked)}
                                         className="w-5 h-5 border-gray-300 rounded text-[#16a34a] focus:ring-[#16a34a]"
@@ -143,7 +143,7 @@ const Shop = () => {
                             <div className="flex items-center gap-2">
                                 <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Sort by:</span>
                                 <div className="relative">
-                                    <select 
+                                    <select
                                         value={sortOption}
                                         onChange={(e) => setSortOption(e.target.value)}
                                         className="appearance-none bg-gray-50 border border-gray-100 text-gray-900 text-sm font-black rounded-xl py-2 pl-4 pr-10 focus:outline-none focus:ring-4 focus:ring-green-50 cursor-pointer transition-all"
@@ -173,9 +173,9 @@ const Shop = () => {
                                 {products.map(product => (
                                     <div key={product._id} className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all group flex flex-col hover:-translate-y-1 duration-300">
                                         <div className="relative h-48 overflow-hidden bg-gray-50">
-                                            <img 
-                                                src={product.images?.[0] || 'https://via.placeholder.com/400'} 
-                                                alt={product.name} 
+                                            <img
+                                                src={product.images?.[0] || 'https://via.placeholder.com/400'}
+                                                alt={product.name}
                                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                             />
                                             <div className="absolute top-4 left-0">
@@ -189,7 +189,7 @@ const Shop = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        
+
                                         <div className="p-5 flex flex-col flex-1">
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-1 text-amber-500">
@@ -200,7 +200,7 @@ const Shop = () => {
                                             </div>
 
                                             <h3 className="font-bold text-gray-900 text-base leading-tight mb-4 flex-1 group-hover:text-[#16a34a] transition-colors">{product.name}</h3>
-                                            
+
                                             <div className="flex items-center justify-between mb-5">
                                                 <div>
                                                     <p className="text-[10px] font-black text-gray-300 uppercase leading-none mb-1">Price</p>
@@ -212,15 +212,14 @@ const Shop = () => {
                                                     <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded uppercase tracking-widest border border-amber-100">Only {product.stock} left</span>
                                                 ) : null}
                                             </div>
-                                            
-                                            <button 
+
+                                            <button
                                                 onClick={() => handleAddToCart(product)}
                                                 disabled={product.stock === 0}
-                                                className={`w-full py-4 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
-                                                    product.stock === 0 
-                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                                                className={`w-full py-4 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${product.stock === 0
+                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                                     : 'bg-[#16a34a] text-white hover:bg-[#15803d] shadow-lg shadow-green-100 active:scale-95'
-                                                }`}
+                                                    }`}
                                             >
                                                 <ShoppingCart size={16} />
                                                 Add to Cart

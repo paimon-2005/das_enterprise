@@ -12,8 +12,6 @@ const errorHandler = require('./middleware/errorHandler');
 // Load env vars
 dotenv.config();
 
-// Connect to database
-connectDB();
 
 // Initialize express
 const app = express();
@@ -101,11 +99,20 @@ app.use(errorHandler);
 // Seed admin and start server
 const PORT = process.env.PORT || 5000;
 
-createDefaultAdmin().then(() => {
-    app.listen(PORT, '0.0.0.0', () => {
-        console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-        if (process.env.NODE_ENV === 'development') {
-            console.log(`📡 Accessible on your network at: http://YOUR_IP:${PORT}`);
-        }
-    });
-});
+const startServer = async () => {
+    try {
+        await connectDB();
+        await createDefaultAdmin();
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+            if (process.env.NODE_ENV === 'development') {
+                console.log(`📡 Accessible on your network at: http://YOUR_IP:${PORT}`);
+            }
+        });
+    } catch (error) {
+        console.error(`❌ Failed to start server: ${error.message}`);
+        process.exit(1);
+    }
+};
+
+startServer();
